@@ -1,0 +1,38 @@
+MODRM_VARIANT_REG = 'reg'
+MODRM_VARIANT_ATREG = 'atreg'
+MODRM_VARIANT_ATDISP = 'atdisp'
+MODRM_VARIANT_ATREGPLUSDISP8 = 'atregplusdisp8'
+MODRM_VARIANT_ATREGPLUSDISP32 = 'atregplusdisp32'
+MODRM_VARIANT_ATSCALEINDEXBASE = 'atscaleindexbase'
+MODRM_VARIANT_ATSCALEINDEXBASEDISP8 = 'atscaleindexbasedisp8'
+MODRM_VARIANT_ATSCALEINDEXBASEDISP32 = 'atscaleindexbasedisp32'
+
+ARCH_I386 = 'i386'
+ARCH_AMD64 = 'amd64'
+
+modrm_variants = (
+    MODRM_VARIANT_REG,
+    MODRM_VARIANT_ATREG,
+    #MODRM_VARIANT_ATDISP,
+    MODRM_VARIANT_ATREGPLUSDISP8,
+    MODRM_VARIANT_ATREGPLUSDISP32,
+    #MODRM_VARIANT_ATSCALEINDEXBASE,
+    #MODRM_VARIANT_ATSCALEINDEXBASEDISP8,
+    #MODRM_VARIANT_ATSCALEINDEXBASEDISP32,
+)
+
+possible_reg_operands = {
+    'reg8': 8,
+    'reg16': 16,
+    'reg32': 32,
+    'reg64': 64
+}
+
+possible_regmem_operands = {
+    'reg/mem8': 8,
+    'reg/mem16': 16,
+    'reg/mem32': 32,
+    'reg/mem64': 64
+}
+
+PREFIX = 'X86GEN'
