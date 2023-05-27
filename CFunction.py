@@ -88,6 +88,28 @@ class CFunction_Parameter_RmAtScaleIndexBase(CFunction_Parameter):
             self.reg_size,
         )
 
+class CFunction_Parameter_RmAtScaleIndexBaseDisp8(CFunction_Parameter):
+    def __init__(self, size, reg_size):
+        assert(size in (8, 16, 32, 64))
+        assert(reg_size in (8, 16, 32, 64))
+        self.size = size
+        self.reg_size = reg_size
+
+    def signature(self):
+        return ', '.join([
+            CFunction_Parameter_Reg('sib_base', self.reg_size).signature(),
+            CFunction_Parameter_Reg('sib_index', self.reg_size).signature(),
+            CFunction_Parameter_Scale('sib_scale').signature(),
+            CFunction_Parameter_Uint('disp', 8).signature(),
+        ])
+
+    def name_part(self):
+        return 'rm%datbasereg%dindexreg%dscaledisp8' % (
+            self.size,
+            self.reg_size,
+            self.reg_size,
+        )
+
 class CFunction_Parameter_RmAtReg(CFunction_Parameter):
     def __init__(self, size, reg_size):
         assert(size in (8, 16, 32, 64))
@@ -113,7 +135,7 @@ class CFunction_Parameter_RmAtRegPlusDisp(CFunction_Parameter):
     def signature(self):
         return ', '.join([
             CFunction_Parameter_Reg('rm_reg', self.reg_size).signature(),
-            CFunction_Parameter_Uint('rm_disp', self.disp_size).signature()
+            CFunction_Parameter_Uint('disp', self.disp_size).signature()
         ])
 
     def name_part(self):
@@ -206,7 +228,7 @@ class CFunction_Opcode_Value(CFunction_Opcode):
 
 class CFunction_Opcode_Disp(CFunction_Opcode_Value):
     def __init__(self, size):
-        super().__init__('rm_disp', size)
+        super().__init__('disp', size)
 
 class CFunction_Opcode_HexByte(CFunction_Opcode):
     def __init__(self, value):
