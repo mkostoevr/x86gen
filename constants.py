@@ -10,6 +10,8 @@ MODRM_VARIANT_ATSCALEINDEXBASEDISP32 = 'atscaleindexbasedisp32'
 ARCH_I386 = 'i386'
 ARCH_AMD64 = 'amd64'
 
+PARAMETER_SEPARATOR = ',\n  '
+
 modrm_variants = (
     MODRM_VARIANT_REG,
     MODRM_VARIANT_ATREG,

@@ -2,7 +2,7 @@
 # TODO: Generate tests.
 # TODO: Create aliases for generators with the same parameters emitting the same code.
 # TODO: Store generators and other data in some objective representaion (unlike strings).
-# TODO: Beautifulize the C output.
+# TODO: Conditionally beautifulize the C output.
 
 from constants import *
 from CFunction import *

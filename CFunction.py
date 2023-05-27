@@ -75,7 +75,7 @@ class CFunction_Parameter_RmAtScaleIndexBase(CFunction_Parameter):
         self.reg_size = reg_size
 
     def signature(self):
-        return ', '.join([
+        return PARAMETER_SEPARATOR.join([
             CFunction_Parameter_Reg('sib_base', self.reg_size).signature(),
             CFunction_Parameter_Reg('sib_index', self.reg_size).signature(),
             CFunction_Parameter_Scale('sib_scale').signature(),
@@ -96,7 +96,7 @@ class CFunction_Parameter_RmAtScaleIndexBaseDisp8(CFunction_Parameter):
         self.reg_size = reg_size
 
     def signature(self):
-        return ', '.join([
+        return PARAMETER_SEPARATOR.join([
             CFunction_Parameter_Reg('sib_base', self.reg_size).signature(),
             CFunction_Parameter_Reg('sib_index', self.reg_size).signature(),
             CFunction_Parameter_Scale('sib_scale').signature(),
@@ -118,7 +118,7 @@ class CFunction_Parameter_RmAtScaleIndexBaseDisp32(CFunction_Parameter):
         self.reg_size = reg_size
 
     def signature(self):
-        return ', '.join([
+        return PARAMETER_SEPARATOR.join([
             CFunction_Parameter_Reg('sib_base', self.reg_size).signature(),
             CFunction_Parameter_Reg('sib_index', self.reg_size).signature(),
             CFunction_Parameter_Scale('sib_scale').signature(),
@@ -155,7 +155,7 @@ class CFunction_Parameter_RmAtRegPlusDisp(CFunction_Parameter):
         self.disp_size = disp_size
    
     def signature(self):
-        return ', '.join([
+        return PARAMETER_SEPARATOR.join([
             CFunction_Parameter_Reg('rm_reg', self.reg_size).signature(),
             CFunction_Parameter_Uint('disp', self.disp_size).signature()
         ])
@@ -292,7 +292,7 @@ class CFunction:
         )
 
     def c_function_parameters(self):
-        return ', '.join([
+        return PARAMETER_SEPARATOR.join([
             parameter.signature() for parameter in self.parameters
         ])
 
@@ -304,7 +304,9 @@ class CFunction:
     def generate(self):
         return (
             '%s\n' +
-            'static void %s(X86Gen_Output output, %s) {\n' +
+            'static void %s(\n'+
+            '  X86Gen_Output output,\n' +
+            '  %s\n) {\n' +
             '  const uint8_t buf[] = {\n' +
             '    %s\n' +
             '  };\n' +
