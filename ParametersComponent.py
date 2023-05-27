@@ -35,6 +35,8 @@ class ParametersComponent_ModRm_Abstract(ParametersComponent):
             return ParametersComponent_ModRm_Reg(self.size, self.size)
         elif modrm == MODRM_VARIANT_ATREG:
             return ParametersComponent_ModRm_AtReg(self.size, native_size)
+        elif modrm == MODRM_VARIANT_ATDISP32:
+            return ParametersComponent_ModRm_AtDisp32(self.size)
         elif modrm == MODRM_VARIANT_ATREGPLUSDISP8:
             return ParametersComponent_ModRm_AtRegPlusDisp(self.size, native_size, 8)
         elif modrm == MODRM_VARIANT_ATREGPLUSDISP32:
@@ -59,6 +61,16 @@ class ParametersComponent_ModRm_Reg(ParametersComponent):
 
     def comment(self):
         return 'reg%d' % (self.rm_reg_size,)
+
+class ParametersComponent_ModRm_AtDisp32(ParametersComponent):
+    def __init__(self, rm_size):
+        self.rm_size = rm_size
+
+    def parameter(self):
+        return CFunction_Parameter_RmAtDisp32(self.rm_size)
+
+    def comment(self):
+        return '%s[disp32]' % (size_to_word(self.rm_size),)
 
 class ParametersComponent_ModRm_AtReg(ParametersComponent):
     def __init__(self, rm_size, rm_reg_size):

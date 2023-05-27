@@ -25,12 +25,20 @@ class OpcodeComponent_ModRmSibDisp_Abstract(OpcodeComponent_ModRmSibDisp):
             return OpcodeComponent_ModRmSibDisp_Reg()
         elif modrm == MODRM_VARIANT_ATREG:
             return OpcodeComponent_ModRmSibDisp_AtReg()
+        elif modrm == MODRM_VARIANT_ATDISP32:
+            return OpcodeComponent_ModRmSibDisp_AtDisp32()
         elif modrm == MODRM_VARIANT_ATREGPLUSDISP8:
             return OpcodeComponent_ModRmSibDisp_AtRegPlusDisp(8)
         elif modrm == MODRM_VARIANT_ATREGPLUSDISP32:
             return OpcodeComponent_ModRmSibDisp_AtRegPlusDisp(32)
         else:
             raise 'Error: Unknown modrm variant: %s' % (modrm,)
+
+class OpcodeComponent_ModRmSibDisp_AtDisp32(OpcodeComponent_ModRmSibDisp):
+    def opcodes(self):
+        return (
+            CFunction_Opcode_ModRm_Disp32(),
+        )
 
 class OpcodeComponent_ModRmSibDisp_Reg(OpcodeComponent_ModRmSibDisp):
     def opcodes(self):

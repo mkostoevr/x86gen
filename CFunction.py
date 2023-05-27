@@ -46,6 +46,17 @@ class CFunction_Parameter_RmReg(CFunction_Parameter):
     def name_part(self):
         return 'rm%dreg%d' % (self.size, self.reg_size)
 
+class CFunction_Parameter_RmAtDisp32(CFunction_Parameter):
+    def __init__(self, size):
+        assert(size in (8, 16, 32, 64))
+        self.size = size
+
+    def signature(self):
+        return CFunction_Parameter_Uint('disp', 32).signature()
+
+    def name_part(self):
+        return 'rm%datdisp32' % (self.size)
+
 class CFunction_Parameter_RmAtReg(CFunction_Parameter):
     def __init__(self, size, reg_size):
         assert(size in (8, 16, 32, 64))
@@ -101,6 +112,13 @@ class CFunction_Opcode_ModRm_Reg(CFunction_Opcode_ModRm_Generic):
         mod = '%s_B11' % (PREFIX,)
         reg = 'reg'
         rm = 'rm_reg'
+        super().__init__(mod, reg, rm)
+
+class CFunction_Opcode_ModRm_Disp32(CFunction_Opcode_ModRm_Generic):
+    def __init__(self):
+        mod = '%s_B00' % (PREFIX,)
+        reg = 'reg'
+        rm = '%s_B101' % (PREFIX,)
         super().__init__(mod, reg, rm)
 
 class CFunction_Opcode_ModRm_AtReg(CFunction_Opcode_ModRm_Generic):
