@@ -33,6 +33,16 @@ class CFunction_Parameter_Reg(CFunction_Parameter):
     def name_part(self):
         return 'reg%d' % (self.size,)
 
+class CFunction_Parameter_Scale(CFunction_Parameter):
+    def __init__(self, name):
+        self.name = name
+
+    def signature(self):
+        return 'enum X86Gen_Scale %s' % (self.name)
+
+    def name_part(self):
+        return 'scale'
+
 class CFunction_Parameter_RmReg(CFunction_Parameter):
     def __init__(self, size, reg_size):
         assert(size in (8, 16, 32, 64))
@@ -56,6 +66,27 @@ class CFunction_Parameter_RmAtDisp32(CFunction_Parameter):
 
     def name_part(self):
         return 'rm%datdisp32' % (self.size)
+
+class CFunction_Parameter_RmAtScaleIndexBase(CFunction_Parameter):
+    def __init__(self, size, reg_size):
+        assert(size in (8, 16, 32, 64))
+        assert(reg_size in (8, 16, 32, 64))
+        self.size = size
+        self.reg_size = reg_size
+
+    def signature(self):
+        return ', '.join([
+            CFunction_Parameter_Reg('sib_base', self.reg_size).signature(),
+            CFunction_Parameter_Reg('sib_index', self.reg_size).signature(),
+            CFunction_Parameter_Scale('sib_scale').signature(),
+        ])
+
+    def name_part(self):
+        return 'rm%datbasereg%dindexreg%dscale' % (
+            self.size,
+            self.reg_size,
+            self.reg_size,
+        )
 
 class CFunction_Parameter_RmAtReg(CFunction_Parameter):
     def __init__(self, size, reg_size):
@@ -149,14 +180,16 @@ def cfunction_opcode_modrm_atregplusdisp(disp_size):
     else:
         return CFunction_Opcode_ModRm_AtRegPlusDisp32()
 
-class CFunction_Opcode_Sib(CFunction_Opcode):
-    def __init__(self, scale, index, base):
-        self.scale = scale
-        self.index = index
-        self.base = base
+class CFunction_Opcode_ModRm_ScaleIndexBase(CFunction_Opcode_ModRm_Generic):
+    def __init__(self):
+        mod = '%s_B00' % (PREFIX,)
+        reg = 'reg'
+        rm = '%s_B100' % (PREFIX,)
+        super().__init__(mod, reg, rm)
 
+class CFunction_Opcode_Sib(CFunction_Opcode):
     def emit(self):
-        return 'X86GEN_SIB(%s, %s, %s)' % (self.scale, self.index, self.base)
+        return '%s_SIB(sib_scale, sib_index, sib_base)' % (PREFIX,)
 
 class CFunction_Opcode_Value(CFunction_Opcode):
     def __init__(self, name, size):

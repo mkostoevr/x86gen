@@ -2,6 +2,7 @@
 # TODO: Implement SIB.
 # TODO: Generate tests.
 # TODO: Create aliases for generators with the same parameters emitting the same code.
+# TODO: Store generators and other data in some objective representaion (unlike strings).
 
 from constants import *
 from CFunction import *

@@ -31,8 +31,17 @@ class OpcodeComponent_ModRmSibDisp_Abstract(OpcodeComponent_ModRmSibDisp):
             return OpcodeComponent_ModRmSibDisp_AtRegPlusDisp(8)
         elif modrm == MODRM_VARIANT_ATREGPLUSDISP32:
             return OpcodeComponent_ModRmSibDisp_AtRegPlusDisp(32)
+        elif modrm == MODRM_VARIANT_ATSCALEINDEXBASE:
+            return OpcodeComponent_ModRmSibDisp_AtScaleIndexBase()
         else:
             raise 'Error: Unknown modrm variant: %s' % (modrm,)
+
+class OpcodeComponent_ModRmSibDisp_AtScaleIndexBase(OpcodeComponent_ModRmSibDisp):
+    def opcodes(self):
+        return (
+            CFunction_Opcode_ModRm_ScaleIndexBase(),
+            CFunction_Opcode_Sib(),
+        )
 
 class OpcodeComponent_ModRmSibDisp_AtDisp32(OpcodeComponent_ModRmSibDisp):
     def opcodes(self):
