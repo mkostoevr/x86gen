@@ -110,6 +110,28 @@ class CFunction_Parameter_RmAtScaleIndexBaseDisp8(CFunction_Parameter):
             self.reg_size,
         )
 
+class CFunction_Parameter_RmAtScaleIndexBaseDisp32(CFunction_Parameter):
+    def __init__(self, size, reg_size):
+        assert(size in (8, 16, 32, 64))
+        assert(reg_size in (8, 16, 32, 64))
+        self.size = size
+        self.reg_size = reg_size
+
+    def signature(self):
+        return ', '.join([
+            CFunction_Parameter_Reg('sib_base', self.reg_size).signature(),
+            CFunction_Parameter_Reg('sib_index', self.reg_size).signature(),
+            CFunction_Parameter_Scale('sib_scale').signature(),
+            CFunction_Parameter_Uint('disp', 32).signature(),
+        ])
+
+    def name_part(self):
+        return 'rm%datbasereg%dindexreg%dscaledisp32' % (
+            self.size,
+            self.reg_size,
+            self.reg_size,
+        )
+
 class CFunction_Parameter_RmAtReg(CFunction_Parameter):
     def __init__(self, size, reg_size):
         assert(size in (8, 16, 32, 64))

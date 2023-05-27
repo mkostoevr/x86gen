@@ -45,6 +45,8 @@ class ParametersComponent_ModRm_Abstract(ParametersComponent):
             return ParametersComponent_ModRm_AtScaleIndexBase(self.size, native_size)
         elif modrm == MODRM_VARIANT_ATSCALEINDEXBASEDISP8:
             return ParametersComponent_ModRm_AtScaleIndexBaseDisp8(self.size, native_size)
+        elif modrm == MODRM_VARIANT_ATSCALEINDEXBASEDISP32:
+            return ParametersComponent_ModRm_AtScaleIndexBaseDisp32(self.size, native_size)
         else:
             raise 'Error: Unknown modrm variant: %s' % (modrm,)
 
@@ -91,6 +93,21 @@ class ParametersComponent_ModRm_AtScaleIndexBaseDisp8(ParametersComponent):
 
     def comment(self):
         return '%s[reg%d + reg%d * scale + disp8]' % (
+            size_to_word(self.rm_size),
+            self.reg_size,
+            self.reg_size,
+        )
+
+class ParametersComponent_ModRm_AtScaleIndexBaseDisp32(ParametersComponent):
+    def __init__(self, rm_size, reg_size):
+        self.rm_size = rm_size
+        self.reg_size = reg_size
+
+    def parameter(self):
+        return CFunction_Parameter_RmAtScaleIndexBaseDisp32(self.rm_size, self.reg_size)
+
+    def comment(self):
+        return '%s[reg%d + reg%d * scale + disp32]' % (
             size_to_word(self.rm_size),
             self.reg_size,
             self.reg_size,

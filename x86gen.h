@@ -147,18 +147,6 @@ static void x86gen_i386_mov_rm8r_reg8(X86Gen_Output out, enum X86Gen_Reg8 src, e
   X86GEN_EMIT(0x88, X86GEN_MOD_RM(X86GEN_B11, dst, src));
 }
 
-/* mov [reg32base + reg32index * scale + disp32], reg8 */
-static void x86gen_i386_mov_rm8atbasereg32indexreg32scaledisp32_reg8(
-  X86Gen_Output out,
-  enum X86Gen_Reg32 base,
-  enum X86Gen_Reg32 index,
-  enum X86Gen_Scale scale,
-  uint32_t disp,
-  enum X86Gen_Reg8 src
-) {
-  X86GEN_EMIT(0x88, X86GEN_MOD_RM(X86GEN_B10, src, X86GEN_B100), X86GEN_SIB(scale, index, base), X86GEN_EXPAND_32(disp));
-}
-
 /* mov reg/mem16, reg16 */
 static void x86gen_i386_mov_rm16r_reg16(X86Gen_Output out, enum X86Gen_Reg16 src, enum X86Gen_Reg16 dst) {
   X86GEN_EMIT(X86GEN_PREFIX_OPERAND_SIZE_OVERRIDE, 0x89, X86GEN_MOD_RM(X86GEN_B11, dst, src));

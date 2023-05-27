@@ -1,8 +1,8 @@
 # TODO: Assert for non-valid register number for some versions of ModRm.
-# TODO: Implement SIB.
 # TODO: Generate tests.
 # TODO: Create aliases for generators with the same parameters emitting the same code.
 # TODO: Store generators and other data in some objective representaion (unlike strings).
+# TODO: Beautifulize the C output.
 
 from constants import *
 from CFunction import *
