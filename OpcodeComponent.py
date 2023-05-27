@@ -67,6 +67,7 @@ class OpcodeComponent_ModRmSibDisp_AtDisp32(OpcodeComponent_ModRmSibDisp):
     def opcodes(self):
         return (
             CFunction_Opcode_ModRm_Disp32(),
+            CFunction_Opcode_Disp(32),
         )
 
 class OpcodeComponent_ModRmSibDisp_Reg(OpcodeComponent_ModRmSibDisp):
@@ -90,5 +91,3 @@ class OpcodeComponent_ModRmSibDisp_AtRegPlusDisp(OpcodeComponent_ModRmSibDisp):
             cfunction_opcode_modrm_atregplusdisp(self.rm_disp_size),
             CFunction_Opcode_Disp(self.rm_disp_size),
         )
-
-
