@@ -117,11 +117,27 @@ def main():
                 generate_modrm_variants(ARCH_AMD64, name.lower(), parameters, raw_opcodes, modrm_sib_disp)
 
     instructions = (
-        # Information from mnemonic:
-        # - instruction name, required for generator name.
-        # - reg/mem size, required for choosing right types for parameters and for generator name.
-        # - type of reg (segReg or usual reg), required for choosing right reg parameter type and for generator name.
-        # - parameter order (are reg/mem parameters or reg parameter first?), required for generator name and parameters.
+        # ADD
+        #InstructionDefinition('ADD AL, imm8', '04 ib'),
+        #InstructionDefinition('ADD AX, imm16', '05 iw'),
+        #InstructionDefinition('ADD EAX, imm32', '05 id'),
+        #InstructionDefinition('ADD RAX, imm32', '05 id'),
+        #InstructionDefinition('ADD reg/mem8, imm8', '80 /0 ib'),
+        #InstructionDefinition('ADD reg/mem16, imm16', '81 /0 iw'),
+        #InstructionDefinition('ADD reg/mem32, imm32', '81 /0 id'),
+        #InstructionDefinition('ADD reg/mem64, imm32', '81 /0 id'),
+        #InstructionDefinition('ADD reg/mem16, imm8', '83 /0 ib'),
+        #InstructionDefinition('ADD reg/mem32, imm8', '83 /0 ib'),
+        #InstructionDefinition('ADD reg/mem64, imm8', '83 /0 ib'),
+        InstructionDefinition('ADD reg/mem8, reg8', '00 /r'),
+        InstructionDefinition('ADD reg/mem16, reg16', '01 /r'),
+        InstructionDefinition('ADD reg/mem32, reg32', '01 /r'),
+        InstructionDefinition('ADD reg/mem64, reg64', '01 /r'),
+        InstructionDefinition('ADD reg8, reg/mem8', '02 /r'),
+        InstructionDefinition('ADD reg16, reg/mem16', '03 /r'),
+        InstructionDefinition('ADD reg32, reg/mem32', '03 /r'),
+        InstructionDefinition('ADD reg64, reg/mem64', '03 /r'),
+        # MOV
         InstructionDefinition('MOV reg/mem8, reg8', '88 /r'),
         InstructionDefinition('MOV reg/mem16, reg16', '89 /r'),
         InstructionDefinition('MOV reg/mem32, reg32', '89 /r'),
