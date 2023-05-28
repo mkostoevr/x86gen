@@ -7,7 +7,6 @@
 
 from constants import *
 from CFunction import *
-from ParsedOperand import *
 from ParsedOpcodePart import *
 from ParameterSet import *
 from OpcodeSet import *
@@ -56,6 +55,17 @@ def generate_modrm_variants(arch, name, parameters, opcodes, abstract_modrm_sib_
             abstract_modrm_sib_disp.variant(modrm, arch)
         )
 
+def parameter_set(operand):
+    assert(is_str(operand))
+    if operand.startswith('reg/mem'):
+        size = int(operand[len('reg/mem'):])
+        return ParameterSet_ModRm_Abstract(size)
+    elif operand.startswith('reg'):
+        size = int(operand[len('reg'):])
+        return ParameterSet_Reg(size)
+    else:
+        raise 'Error: Unknown instruction operand: %s' % (operand,)
+
 def main():
     class InstructionDefinition:
         def __init__(self, mnemonic, opcode, valid_in_i386 = True):
@@ -89,24 +99,23 @@ def main():
                         exit(1)
                 return ParsedOpcodeParts(tuple(result))
 
-            def parsed_operands(operand_strings):
+            def parameter_sets(operand_strings):
                 result = []
                 for string in operand_strings:
-                    result.append(parsed_operand(string))
-                return ParsedOperands(tuple(result))
+                    result.append(parameter_set(string))
+                return ParameterSets(tuple(result))
 
             name, operand_strings = mnemonic_parts(mnemonic)
-            operands = parsed_operands(operand_strings)
-            opcodes = parsed_opcode_parts(opcode)
+            parameters = parameter_sets(operand_strings)
 
             generic_comment = '/*\n * %s %s\n */\n' % (
                 name.lower(),
-                str(operands),
+                str(parameters),
             )
 
             print(generic_comment)
 
-            parameters = operands.parameter_sets()
+            opcodes = parsed_opcode_parts(opcode)
             raw_opcodes = opcodes.raw_part()
             modrm_sib_disp = opcodes.modrm_sib_disp()
 

@@ -57,6 +57,9 @@ class ParameterSet_ModRm_Abstract(ParameterSet):
             return ('%s_PREFIX_REX_W' % (PREFIX,),)
         return tuple()
 
+    def __str__(self):
+        return 'reg/mem%d' % (self.size,)
+
 class ParameterSet_ModRm_Reg(ParameterSet):
     def __init__(self, rm_size, rm_reg_size):
         self.rm_size = rm_size
@@ -160,6 +163,9 @@ class ParameterSet_Reg(ParameterSet):
     def comment(self):
         return 'reg%d' % (self.reg_size,)
 
+    def __str__(self):
+        return 'reg%d' % (self.reg_size,)
+
 class ParameterSets:
     def __init__(self, parameters):
         assert(is_tuple(parameters))
@@ -179,3 +185,8 @@ class ParameterSets:
             if len(prefixes) != 0:
                 return prefixes
         return tuple()
+
+    def __str__(self):
+        return ', '.join(
+            [str(parameter) for parameter in self.parameters]
+        )
