@@ -9,7 +9,7 @@ from CFunction import *
 from ParsedOperand import *
 from ParsedOpcodePart import *
 from ParameterSet import *
-from OpcodeComponent import *
+from OpcodeSet import *
 
 def generate_c_output(required_prefixes, opcodes, modrm_sib_disp):
     legacy_prefix_opcodes = tuple(
@@ -43,7 +43,7 @@ def generate_modrm_variants(arch, name, parameters, opcodes, abstract_modrm_sib_
     assert(is_tuple(opcodes))
     for opcode in opcodes:
         assert(is_int(opcode))
-    assert(is_opcode_component(abstract_modrm_sib_disp))
+    assert(is_opcode_set(abstract_modrm_sib_disp))
     for modrm in modrm_variants:
         required_prefixes = parameters.required_prefixes(arch)
         generate_cfunction(

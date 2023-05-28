@@ -1,5 +1,5 @@
 from utils import *
-from OpcodeComponent import *
+from OpcodeSet import *
 
 def is_opcode_part(obj):
     return isinstance(obj, ParsedOpcodePart)
@@ -64,6 +64,6 @@ class ParsedOpcodeParts:
 
     def modrm_sib_disp(self):
         if '/r' in self.opcodes:
-            return OpcodeComponent_ModRmSibDisp_Abstract()
+            return OpcodeSet_ModRmSibDisp_Abstract()
         else:
-            return OpcodeComponent_ModRmSibDisp_Unexisting()
+            return OpcodeSet_ModRmSibDisp_Unexisting()
