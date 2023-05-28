@@ -1,4 +1,5 @@
 # TODO: Assert for non-valid register number for some versions of ModRm.
+# TODO: Create comment about assertions.
 # TODO: Generate tests.
 # TODO: Create aliases for generators with the same parameters emitting the same code.
 # TODO: Store generators and other data in some objective representaion (unlike strings).
@@ -73,7 +74,7 @@ def main():
                 operands = name_and_possibly_first_operand[1:] + comma_splitted[1:]
                 return name, operands
 
-            def opcode_parts(opcode):
+            def parsed_opcode_parts(opcode):
                 # Only single spaces allowed.
                 assert('  ' not in opcode)
                 result = []
@@ -86,7 +87,7 @@ def main():
                     else:
                         print('Unknown opcode part: %s' % (part,))
                         exit(1)
-                return tuple(result)
+                return ParsedOpcodeParts(tuple(result))
 
             def parsed_operands(operand_strings):
                 result = []
@@ -96,7 +97,7 @@ def main():
 
             name, operand_strings = mnemonic_parts(mnemonic)
             operands = parsed_operands(operand_strings)
-            opcodes = ParsedOpcodeParts(opcode_parts(opcode))
+            opcodes = parsed_opcode_parts(opcode)
 
             generic_comment = '/*\n * %s %s\n */\n' % (
                 name.lower(),
