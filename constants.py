@@ -10,6 +10,8 @@ MODRM_VARIANT_ATSCALEINDEXBASEDISP32 = 'atscaleindexbasedisp32'
 ARCH_I386 = 'i386'
 ARCH_AMD64 = 'amd64'
 
+arch_variants = (ARCH_I386, ARCH_AMD64)
+
 PARAMETER_SEPARATOR = ',\n  '
 
 modrm_variants = (
@@ -22,6 +24,9 @@ modrm_variants = (
     MODRM_VARIANT_ATSCALEINDEXBASEDISP8,
     MODRM_VARIANT_ATSCALEINDEXBASEDISP32,
 )
+
+CGEN_OUTPUT_COMPONENT_SEPARATOR = ',\n    '
+CGEN_PARAMETER_SEPARATOR = ',\n  '
 
 possible_reg_operands = {
     'reg8': 8,
