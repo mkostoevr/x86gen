@@ -8,7 +8,7 @@ from constants import *
 from CFunction import *
 from ParsedOperand import *
 from ParsedOpcodePart import *
-from ParametersComponent import *
+from ParameterSet import *
 from OpcodeComponent import *
 
 def generate_c_output(required_prefixes, opcodes, modrm_sib_disp):
@@ -39,7 +39,7 @@ def generate_cfunction(arch, name, parameters, required_prefixes, opcodes, modrm
 def generate_modrm_variants(arch, name, parameters, opcodes, abstract_modrm_sib_disp):
     assert(is_str(arch))
     assert(is_str(name))
-    assert(is_parameters_components(parameters))
+    assert(is_parameter_sets(parameters))
     assert(is_tuple(opcodes))
     for opcode in opcodes:
         assert(is_int(opcode))
@@ -105,7 +105,7 @@ def main():
 
             print(generic_comment)
 
-            parameters = operands.parameters_components()
+            parameters = operands.parameter_sets()
             raw_opcodes = opcodes.raw_part()
             modrm_sib_disp = opcodes.modrm_sib_disp()
 

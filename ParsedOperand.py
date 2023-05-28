@@ -1,5 +1,5 @@
 from utils import *
-from ParametersComponent import *
+from ParameterSet import *
 
 def is_parsed_operand(obj):
     return isinstance(obj, ParsedOperand)
@@ -17,8 +17,8 @@ class ParsedOperand_Reg(ParsedOperand):
     def __str__(self):
         return 'reg%d' % (self.size,)
 
-    def parameters_component(self):
-        return ParametersComponent_Reg(self.size)
+    def parameter_set(self):
+        return ParameterSet_Reg(self.size)
 
 class ParsedOperand_Reg8(ParsedOperand_Reg):
     def __init__(self):
@@ -43,8 +43,8 @@ class ParsedOperand_RegMem(ParsedOperand):
     def __str__(self):
         return 'reg/mem%d' % (self.size,)
 
-    def parameters_component(self):
-        return ParametersComponent_ModRm_Abstract(self.size)
+    def parameter_set(self):
+        return ParameterSet_ModRm_Abstract(self.size)
 
 class ParsedOperand_RegMem8(ParsedOperand_RegMem):
     def __init__(self):
@@ -72,11 +72,11 @@ class ParsedOperands:
     def __str__(self):
         return ', '.join([str(operand) for operand in self.operands])
 
-    def parameters_components(self):
+    def parameter_sets(self):
         result = []
         for operand in self.operands:
-            result.append(operand.parameters_component())
-        return ParametersComponents(tuple(result))
+            result.append(operand.parameter_set())
+        return ParameterSets(tuple(result))
 
 def parsed_operand(operand):
     m = {
