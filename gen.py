@@ -733,6 +733,17 @@ def main():
 
     entries = (
         # ADD
+        entry('ADD AL, imm8', '04 ib'),
+        entry('ADD AX, imm16', '05 iw'),
+        entry('ADD EAX, imm32', '05 id'),
+        entry('ADD RAX, imm32', '05 id', (ARCH_AMD64,)),
+        entry('ADD reg/mem8, imm8', '80 /0 ib'),
+        entry('ADD reg/mem16, imm16', '81 /0 iw'),
+        entry('ADD reg/mem32, imm32', '81 /0 id'),
+        entry('ADD reg/mem64, imm32', '81 /0 id', (ARCH_AMD64,)),
+        entry('ADD reg/mem16, imm8', '83 /0 ib'),
+        entry('ADD reg/mem32, imm8', '83 /0 ib'),
+        entry('ADD reg/mem64, imm8', '83 /0 ib', (ARCH_AMD64,)),
         entry('ADD reg/mem8, reg8', '00 /r'),
         entry('ADD reg/mem16, reg16', '01 /r'),
         entry('ADD reg/mem32, reg32', '01 /r'),
