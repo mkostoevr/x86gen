@@ -28,8 +28,17 @@ def is_byte_value(x):
 def is_reg_size(x):
     return x in (8, 16, 32, 64)
 
+def is_imm_size(x):
+    return x in (8, 16, 32, 64)
+
+def is_8_to_64(x):
+    return x in (8, 16, 32, 64)
+
 def is_disp_size(x):
     return x in (8, 32)
+
+def is_moffset_size(x):
+    return x in (32, 64)
 
 def is_native_size(x):
     return x in (32, 64)
