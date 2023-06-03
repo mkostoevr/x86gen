@@ -777,6 +777,18 @@ def main():
         entry('MOV reg/mem16, imm16', 'C7 /0 iw'),
         entry('MOV reg/mem32, imm32', 'C7 /0 id'),
         entry('MOV reg/mem64, imm32', 'C7 /0 id', (ARCH_AMD64,)),
+        # POP
+        entry('POP reg/mem16', '8F /0'),
+        entry('POP reg/mem32', '8F /0'),
+        entry('POP reg/mem64', '8F /0', (ARCH_AMD64,)),
+        entry('POP reg16', '58 +rw'),
+        entry('POP reg32', '58 +rd'),
+        entry('POP reg64', '58 +rq', (ARCH_AMD64,)),
+        entry('POP DS', '1F'),
+        entry('POP ES', '07'),
+        entry('POP SS', '17'),
+        entry('POP FS', '0F A1'),
+        entry('POP GS', '0F A9'),
     )
 
     for entry in entries:
