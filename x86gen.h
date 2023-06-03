@@ -130,6 +130,14 @@ enum X86Gen_Scale {
 
 #define X86GEN_EXPAND_16(val) (val & 0xff), ((val & 0xff00) >> 8)
 #define X86GEN_EXPAND_32(val) (val & 0xff), ((val & 0xff00) >> 8), ((val & 0xff0000) >> 16), ((val & 0xff000000) >> 24)
+#define X86GEN_EXPAND_64(val) ((val & 0xff) >> 0), \
+                              ((val & 0xff00) >> 8), \
+                              ((val & 0xff0000) >> 16), \
+                              ((val & 0xff000000) >> 24), \
+                              ((val & 0xff00000000) >> 32), \
+                              ((val & 0xff0000000000) >> 40), \
+                              ((val & 0xff000000000000) >> 48), \
+                              ((val & 0xff00000000000000) >> 56)
 
 #define X86GEN_EMIT(...) do {                  \
   const uint8_t buf[] = { __VA_ARGS__ }; \

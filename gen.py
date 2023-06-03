@@ -761,6 +761,22 @@ def main():
         entry('MOV reg16, reg/mem16', '8B /r'),
         entry('MOV reg32, reg/mem32', '8B /r'),
         entry('MOV reg64, reg/mem64', '8B /r', (ARCH_AMD64,)),
+        entry('MOV AL, moffset8', 'A0'),
+        entry('MOV AX, moffset16', 'A1'),
+        entry('MOV EAX, moffset32', 'A1'),
+        entry('MOV RAX, moffset64', 'A1', (ARCH_AMD64,)),
+        entry('MOV moffset8, AL', 'A2'),
+        entry('MOV moffset16, AX', 'A3'),
+        entry('MOV moffset32, EAX', 'A3'),
+        entry('MOV moffset64, RAX', 'A3', (ARCH_AMD64,)),
+        entry('MOV reg8, imm8', 'B0 +rb ib'),
+        entry('MOV reg16, imm16', 'B8 +rw iw'),
+        entry('MOV reg32, imm32', 'B8 +rd id'),
+        entry('MOV reg64, imm64', 'B8 +rq iq', (ARCH_AMD64,)),
+        entry('MOV reg/mem8, imm8', 'C6 /0 ib'),
+        entry('MOV reg/mem16, imm16', 'C7 /0 iw'),
+        entry('MOV reg/mem32, imm32', 'C7 /0 id'),
+        entry('MOV reg/mem64, imm32', 'C7 /0 id', (ARCH_AMD64,)),
     )
 
     for entry in entries:
