@@ -420,9 +420,9 @@ class CGen_Parameter_Index(CGen_Parameter):
         return 'enum X86Gen_Reg%d sib_index' % (self.size,)
 
     def test_values(self):
-        assert(self.size in gp_regs_of_size)
+        assert(self.size in rm_regs_of_size)
         return tuple(
-            [reg.lower() for reg in gp_regs_of_size[self.size]]
+            [reg.lower() for reg in rm_regs_of_size[self.size]]
         )
 
 class CGen_Parameter_Base(CGen_Parameter):
@@ -435,9 +435,9 @@ class CGen_Parameter_Base(CGen_Parameter):
         return 'enum X86Gen_Reg%d sib_base' % (self.size,)
 
     def test_values(self):
-        assert(self.size in gp_regs_of_size)
+        assert(self.size in rm_regs_of_size)
         return tuple(
-            [reg.lower() for reg in gp_regs_of_size[self.size]]
+            [reg.lower() for reg in rm_regs_of_size[self.size]]
         )
 
 class CGen_Parameter_Output(CGen_Parameter):
