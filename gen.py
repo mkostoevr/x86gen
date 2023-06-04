@@ -1129,6 +1129,8 @@ def main():
         entry('ADD reg16, reg/mem16', '03 /r'),
         entry('ADD reg32, reg/mem32', '03 /r'),
         entry('ADD reg64, reg/mem64', '03 /r', (ARCH_AMD64,)),
+        # DAS
+        entry('DAS', '2F', (ARCH_I386,)),
         # MOV
         entry('MOV reg/mem8, reg8', '88 /r'),
         entry('MOV reg/mem16, reg16', '89 /r'),
