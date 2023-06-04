@@ -1103,6 +1103,8 @@ def main():
     entries = (
         # AAA
         entry('AAA', '37', (ARCH_I386,)),
+        # AAD
+        entry('AAD', 'D5 0A', (ARCH_I386,)),
         # ADD
         entry('ADD AL, imm8', '04 ib'),
         entry('ADD AX, imm16', '05 iw'),
