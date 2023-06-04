@@ -1227,6 +1227,9 @@ def main():
         entry('POP SS', '17'),
         entry('POP FS', '0F A1'),
         entry('POP GS', '0F A9'),
+        # POPA
+        entry('POPA', '61', (ARCH_I386,), 16),
+        entry('POPAD', '61', (ARCH_I386,), 32),
     )
 
     for entry in entries:
