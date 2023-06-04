@@ -1,3 +1,5 @@
+import sys
+
 # Constants ####################################################################
 
 CGEN_PREFIX = 'X86GEN'
@@ -8,6 +10,24 @@ ARCH_I386 = 'i386'
 ARCH_AMD64 = 'amd64'
 
 arch_variants = (ARCH_I386, ARCH_AMD64)
+
+test_values_limit = 1
+
+gp_regs_of_size = {
+    8: ('AL', 'BL', 'CL', 'DL', 'AH', 'BH', 'CH', 'DH'),
+    16: ('AX', 'BX', 'CX', 'DX', 'SI', 'DI', 'SP', 'BP'),
+    32: ('EAX', 'EBX', 'ECX', 'EDX', 'ESI', 'EDI', 'ESP', 'EBP'),
+    64: ('RAX', 'RBX', 'RCX', 'RDX', 'RSI', 'RDI', 'RSP', 'RBP'),
+}
+
+rm_regs_of_size = {
+    8: ('AL', 'BL', 'CL', 'DL', 'AH', 'BH'),
+    16: ('AX', 'BX', 'CX', 'DX', 'SI', 'DI'),
+    32: ('EAX', 'EBX', 'ECX', 'EDX', 'ESI', 'EDI'),
+    64: ('RAX', 'RBX', 'RCX', 'RDX', 'RSI', 'RDI'),
+}
+
+seg_regs = ('CS', 'DS', 'ES', 'FS', 'GS', 'SS')
 
 imms = {
     'imm8': 8,
@@ -294,6 +314,31 @@ class CGen_Output:
             [component.emit() for component in self.components]
         )
 
+def test_values_uint(size):
+    assert(size <= 64)
+    part = size // 4 + 2
+    return (
+        '0x1122334455667788'[:part],
+        '0x8877665544332211'[:part],
+        '0x0000000000000000'[:part],
+        '0xFFFFFFFFFFFFFFFF'[:part],
+    )
+
+def test_values_int(size):
+    assert(size <= 64)
+    part = size // 4 + 2
+    npart = part + 1
+    return (
+        '0x0011223344556677'[:part],
+        '0x7766554433221100'[:part],
+        '0x0000000000000000'[:part],
+        '0x7FFFFFFFFFFFFFFF'[:part],
+        '-0x0011223344556677'[:npart],
+        '-0x7766554433221100'[:npart],
+        '-0x0000000000000000'[:npart],
+        '-0x7FFFFFFFFFFFFFFF'[:npart],
+    )
+
 class CGen_Parameter:
     pass
 
@@ -306,6 +351,9 @@ class CGen_Parameter_Imm(CGen_Parameter):
     def emit(self):
         return 'uint%d_t imm' % (self.size,)
 
+    def test_values(self):
+        return test_values_uint(self.size)
+
 class CGen_Parameter_Moffset(CGen_Parameter):
     def __init__(self, size):
         assert(is_int(size))
@@ -314,6 +362,9 @@ class CGen_Parameter_Moffset(CGen_Parameter):
 
     def emit(self):
         return 'uint%d_t moffset' % (self.size,)
+
+    def test_values(self):
+        return test_values_uint(self.size)
 
 class CGen_Parameter_Disp(CGen_Parameter):
     def __init__(self, size):
@@ -324,6 +375,9 @@ class CGen_Parameter_Disp(CGen_Parameter):
     def emit(self):
         return 'uint%d_t disp' % (self.size,)
 
+    def test_values(self):
+        return test_values_uint(self.size)
+
 class CGen_Parameter_Reg(CGen_Parameter):
     def __init__(self, size):
         assert(is_int(size))
@@ -333,9 +387,20 @@ class CGen_Parameter_Reg(CGen_Parameter):
     def emit(self):
         return 'enum X86Gen_Reg%d reg' % (self.size,)
 
+    def test_values(self):
+        assert(self.size in gp_regs_of_size)
+        return tuple(
+            [reg.lower() for reg in gp_regs_of_size[self.size]]
+        )
+
 class CGen_Parameter_SegReg(CGen_Parameter):
     def emit(self):
         return 'enum X86Gen_SegReg reg'
+
+    def test_values(self):
+        return tuple(
+            [reg.lower() for reg in seg_regs]
+        )
 
 class CGen_Parameter_RmReg(CGen_Parameter):
     def __init__(self, size):
@@ -346,9 +411,23 @@ class CGen_Parameter_RmReg(CGen_Parameter):
     def emit(self):
         return 'enum X86Gen_Reg%d rm_reg' % (self.size,)
 
+    def test_values(self):
+        assert(self.size in rm_regs_of_size)
+        return tuple(
+            [reg.lower() for reg in rm_regs_of_size[self.size]]
+        )
+
 class CGen_Parameter_Scale(CGen_Parameter):
     def emit(self):
         return 'enum X86Gen_Scale sib_scale'
+
+    def test_values(self):
+        return (
+            'X86Gen_Scale_1',
+            'X86Gen_Scale_2',
+            'X86Gen_Scale_4',
+            'X86Gen_Scale_8',
+        )
 
 class CGen_Parameter_Index(CGen_Parameter):
     def __init__(self, size):
@@ -359,6 +438,12 @@ class CGen_Parameter_Index(CGen_Parameter):
     def emit(self):
         return 'enum X86Gen_Reg%d sib_index' % (self.size,)
 
+    def test_values(self):
+        assert(self.size in gp_regs_of_size)
+        return tuple(
+            [reg.lower() for reg in gp_regs_of_size[self.size]]
+        )
+
 class CGen_Parameter_Base(CGen_Parameter):
     def __init__(self, size):
         assert(is_int(size))
@@ -367,6 +452,12 @@ class CGen_Parameter_Base(CGen_Parameter):
 
     def emit(self):
         return 'enum X86Gen_Reg%d sib_base' % (self.size,)
+
+    def test_values(self):
+        assert(self.size in gp_regs_of_size)
+        return tuple(
+            [reg.lower() for reg in gp_regs_of_size[self.size]]
+        )
 
 class CGen_Parameter_Output(CGen_Parameter):
     def emit(self):
@@ -1038,7 +1129,40 @@ def generate_generator(arch, name, operands, opcodes):
     parameters = get_parameters(operands)
     output = get_output(opcodes)
     function = CGen_Function(comment, function_name, parameters, output)
-    print('%s\n' % (function.emit(),))
+    return function
+
+def generate_tests(arch, name, operands, opcodes, function):
+    def generate_combinations(operand_test_sets, my_index):
+        if my_index >= len(operand_test_sets):
+            # The only combination of nothing is nothing.
+            return (tuple(),)
+        my_combinations = []
+        my_test_values = operand_test_sets[my_index]
+        for test_value in my_test_values:
+            next_combinations = generate_combinations(operand_test_sets, my_index + 1)
+            for combination in next_combinations:
+                my_combinations.append((test_value,) + combination)
+        return tuple(my_combinations)
+
+    function_to_call = 'x86gen_%s' % (function.name,)
+    out_name = 'out_%s' % (arch,)
+    # Contains lists of test values for each operand.
+    operand_test_sets = []
+    # Skip the first parameter - it's C output destination.
+    for parameter in function.parameters.parameters[1:]:
+        operand_test_sets.append(parameter.test_values()[:test_values_limit])
+    combinations = generate_combinations(operand_test_sets, 0)
+    if len(combinations) == 0:
+        return ('%s(%s)' % (function_to_call, out_name,),)
+    else:
+        result = []
+        for combination in combinations:
+            args = ', '.join(combination)
+            # FIXME: Why is this happening?
+            if len(args) == 0:
+                return ('%s(%s)' % (function_to_call, out_name,),)
+            result.append('%s(%s, %s)' % (function_to_call, out_name, args,))
+        return tuple(result)
 
 def main():
     def entry(mnemonic, opcode, archs = (ARCH_I386, ARCH_AMD64), op_size = None):
@@ -1147,13 +1271,27 @@ def main():
             op_size = reg_size
         else:
             op_size = None
-        # Generate specific instuctions for each suppored CPU.
+        # Instruction generators for each form of the instruction and each CPU.
+        generators = []
+        # Tests for each instruction form for each CPU.
+        tests = tuple()
         for arch in archs:
             for variant in variants:
                 operands = variant[0]
                 opcodes = variant[1]
                 operands, opcodes = arch_specific(arch, operands, opcodes, op_size)
-                generate_generator(arch, name.lower(), operands, opcodes)
+                generators.append(generate_generator(arch, name.lower(), operands, opcodes))
+                if with_tests:
+                    tests += generate_tests(arch, name.lower(), operands, opcodes, generators[-1])
+
+        for generator in generators:
+            print(generator.emit(), end = '\n\n')
+
+        for test in tests:
+            tests_file.write('%s;\n' % (test,))
+
+    with_tests = True if len(sys.argv) > 1 else False
+    tests_file = open('tests.h', 'w')
 
     entries = (
         # AAA

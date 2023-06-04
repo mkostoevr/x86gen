@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#define X86Gen_Output FILE *
+#define X86Gen_Output_Write(out_i386, size, data) fwrite(data, 1, size, out_i386)
 #include "x86gen.h"
 
 #define rax X86Gen_Reg64_RAX
@@ -40,62 +42,17 @@
 #define ch X86Gen_Reg8_CH
 #define dh X86Gen_Reg8_DH
 
-#define test0(x, name) do {        \
-  printf(#name "\t# ");            \
-  x86gen_ ## x ## _ ## name(NULL); \
-  printf("\n");                    \
-} while (0)
-
-#define test1(x, name, p1, a) do {               \
-  printf(#name " " #a "\t# ");                   \
-  x86gen_ ## x ## _ ## name ## _ ## p1(NULL, a); \
-  printf("\n");                                  \
-} while (0)
-
-#define test2(x, name, p1, p2, a, b) do {                      \
-  printf(#name " " #a ", " #b "\t# ");                         \
-  x86gen_ ## x ## _ ## name ## _ ## p1 ## _ ## p2(NULL, a, b); \
-  printf("\n");                                                \
-} while (0)
+#define cs X86Gen_SegReg_CS
+#define ds X86Gen_SegReg_DS
+#define es X86Gen_SegReg_ES
+#define fs X86Gen_SegReg_FS
+#define gs X86Gen_SegReg_GS
+#define ss X86Gen_SegReg_SS
 
 int main() {
-  printf("I386:\n");
-
-  test2(i386, mov, rm8r,  reg8,  al,  ch);
-  test2(i386, mov, rm16r, reg16, si,  di);
-  test2(i386, mov, rm32r, reg32, ebp, esp);
-
-  test2(i386, mov, reg8,  rm8r,  al,  ch);
-  test2(i386, mov, reg16, rm16r, si,  di);
-  test2(i386, mov, reg32, rm32r, ebp, esp);
-
-  test0(i386, ret);
-  test1(i386, ret, imm16, 26);
-
-  printf("\nAMD64:\n");
-
-  test2(amd64, mov, rm8r,  reg8,  al,  ch);
-  test2(amd64, mov, rm16r, reg16, si,  di);
-  test2(amd64, mov, rm32r, reg32, ebp, esp);
-  test2(amd64, mov, rm64r, reg64, rbp, rsp);
-
-  test2(amd64, mov, reg16, rm16r, si,  di);
-  test2(amd64, mov, reg8,  rm8r,  al,  ch);
-  test2(amd64, mov, reg32, rm32r, ebp, esp);
-  test2(amd64, mov, reg64, rm64r, rbp, rsp);
-
-  test0(amd64, ret);
-  test1(amd64, ret, imm16, 26);
-
-  printf("\nWhatever:\n");
-
-  test2(i386, mov, rm8r, reg8, al, al);
-  test2(i386, mov, rm8atreg32, reg8, eax, al);
-  x86gen_i386_mov_rm8atreg32plusdisp8_reg8(NULL, edi, 0x44, bh); printf("\n");
-  x86gen_i386_mov_rm8atreg32plusdisp32_reg8(NULL, edi, 0x12345678, bh); printf("\n");
-  x86gen_i386_mov_rm8atdisp32_reg8(NULL, 0x12345678, ch); printf("\n");
-  x86gen_i386_mov_rm8atbasereg32indexreg32scale_reg8(NULL, esp, eax, X86Gen_Scale_4, bl); printf("\n");
-  x86gen_i386_mov_rm8atbasereg32indexreg32scaledisp8_reg8(NULL, esp, eax, X86Gen_Scale_4, 0x11, bl); printf("\n");
-  x86gen_i386_mov_rm8atbasereg32indexreg32scaledisp32_reg8(NULL, esp, eax, X86Gen_Scale_4, 0x11111111, bl); printf("\n");
-  x86gen_amd64_mov_reg64_rm64atreg64plusdisp32(NULL, rax, rcx, 0x12345678); printf("\n");
+  FILE *const out_i386 = fopen("test32.bin", "wb");
+  FILE *const out_amd64 = fopen("test64.bin", "wb");
+#include "tests.h"
+  fclose(out_i386);
+  fclose(out_amd64);
 }

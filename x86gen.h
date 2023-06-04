@@ -1,8 +1,13 @@
 #ifndef __MAGOMED__X86GEN_H__
 #define __MAGOMED__X86GEN_H__
 
+#ifndef X86Gen_Output
 #define X86Gen_Output void *
+#endif
+
+#ifndef X86Gen_Output_Write
 #define X86Gen_Output_Write(out, size, data) do { for (size_t i = 0; i < size; i++) { printf("%02x", data[i]); } } while (0)
+#endif
 
 #define X86GEN_REG8_EXPAND(WRAPPER) \
   WRAPPER(AL)                       \
@@ -69,12 +74,12 @@ enum X86Gen_Reg64 {
 };
 
 enum X86Gen_SegReg {
-  X86Gen_SegReg_Es,
-  X86Gen_SegReg_Cs,
-  X86Gen_SegReg_Ss,
-  X86Gen_SegReg_Ds,
-  X86Gen_SegReg_Fs,
-  X86Gen_SegReg_Gs,
+  X86Gen_SegReg_ES,
+  X86Gen_SegReg_CS,
+  X86Gen_SegReg_SS,
+  X86Gen_SegReg_DS,
+  X86Gen_SegReg_FS,
+  X86Gen_SegReg_GS,
 };
 
 #define X86GEN_ENTRY(x) #x,
