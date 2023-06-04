@@ -43,33 +43,11 @@ regs = {
     'reg64': 64,
 }
 
-regmems = {
-    'reg/mem8': (8, 8),
-    'reg/mem16': (16, 16),
-    'reg/mem32': (32, 32),
-    'reg/mem64': (64, 64),
-    'reg16/mem16': (16, 16),
-    'reg32/mem16': (32, 16),
-    'reg64/mem16': (64, 16),
-}
-
 moffsets = {
     'moffset8': 8,
     'moffset16': 16,
     'moffset32': 32,
     'moffset64': 64,
-}
-
-modrms = {
-    '/r': None,
-    '/0': 0,
-    '/1': 1,
-    '/2': 2,
-    '/3': 3,
-    '/4': 4,
-    '/5': 5,
-    '/6': 6,
-    '/7': 7,
 }
 
 is_ = {
@@ -165,6 +143,9 @@ def is_native_size(x):
 
 def is_arch(x):
     return x in arch_variants
+
+def is_int_or_none(x):
+    return is_int(x) or x == None
 
 def without_nones(collection):
     result = []
@@ -802,6 +783,42 @@ class Operand_RegMem_AtScaleIndexBaseDisp32(Operand_Class_RegMem_Memory):
             self.address_size,
         )
 
+class Operand_RegNoMem:
+    def __init__(self, sizes):
+        assert(is_tuple(sizes))
+        assert(len(sizes) == 2)
+        assert(sizes[1] == None)
+        assert(is_int(sizes[0]))
+        self.reg_size = sizes[0]
+
+    def __str__(self):
+        return 'reg%d/nomem' % (self.reg_size,)
+
+    def modrm_split(self):
+        return (Operand_RegMem_Reg(self.reg_size, self.reg_size),)
+
+class Operand_NoRegMem:
+    def __init__(self, sizes):
+        assert(is_tuple(sizes))
+        assert(len(sizes) == 2)
+        assert(sizes[0] == None)
+        assert(is_int(sizes[1]))
+        self.mem_size = sizes[1]
+
+    def __str__(self):
+        return 'noreg/mem%d' % (self.mem_size,)
+
+    def modrm_split(self):
+        return (
+            Operand_RegMem_AtReg(self.mem_size, self.mem_size),
+            Operand_RegMem_AtDisp32(self.mem_size, self.mem_size),
+            Operand_RegMem_AtRegPlusDisp8(self.mem_size, self.mem_size),
+            Operand_RegMem_AtRegPlusDisp32(self.mem_size, self.mem_size),
+            Operand_RegMem_AtScaleIndexBase(self.mem_size, self.mem_size),
+            Operand_RegMem_AtScaleIndexBaseDisp8(self.mem_size, self.mem_size),
+            Operand_RegMem_AtScaleIndexBaseDisp32(self.mem_size, self.mem_size),
+        )
+
 class Operand_RegMem:
     def __init__(self, sizes):
         self.reg_size = sizes[0]
@@ -822,7 +839,23 @@ class Operand_RegMem:
             Operand_RegMem_AtScaleIndexBaseDisp32(self.reg_size, self.mem_size),
         )
 
+regmems = {
+    'reg/mem8': ((8, 8), Operand_RegMem),
+    'reg/mem16': ((16, 16), Operand_RegMem),
+    'reg/mem32': ((32, 32), Operand_RegMem),
+    'reg/mem64': ((64, 64), Operand_RegMem),
+    'reg16/nomem': ((16, None), Operand_RegNoMem),
+    'reg32/nomem': ((32, None), Operand_RegNoMem),
+    'reg64/nomem': ((64, None), Operand_RegNoMem),
+    'noreg/mem16': ((None, 16), Operand_NoRegMem),
+    'noreg/mem32': ((None, 32), Operand_NoRegMem),
+    'noreg/mem64': ((None, 64), Operand_NoRegMem),
+}
+
 # Opcode #######################################################################
+
+def is_class_opcode_modrm(x):
+    return issubclass(x, Opcode_ModRm)
 
 class Opcode:
     def arch_specific(self, arch):
@@ -994,6 +1027,30 @@ class Opcode_ModRm:
             Opcode_ModRm_AtScaleIndexBaseDisp32(self.reg_value),
         )
 
+class Opcode_ModRmNoReg(Opcode_ModRm):
+    def __init__(self, reg_value):
+        super().__init__(reg_value)
+
+    def modrm_split(self):
+        return (
+            Opcode_ModRm_AtReg(self.reg_value),
+            Opcode_ModRm_AtDisp32(self.reg_value),
+            Opcode_ModRm_AtRegPlusDisp8(self.reg_value),
+            Opcode_ModRm_AtRegPlusDisp32(self.reg_value),
+            Opcode_ModRm_AtScaleIndexBase(self.reg_value),
+            Opcode_ModRm_AtScaleIndexBaseDisp8(self.reg_value),
+            Opcode_ModRm_AtScaleIndexBaseDisp32(self.reg_value),
+        )
+
+class Opcode_ModRmNoMem(Opcode_ModRm):
+    def __init__(self, reg_value):
+        super().__init__(reg_value)
+
+    def modrm_split(self):
+        return (
+            Opcode_ModRm_Reg(self.reg_value),
+        )
+
 class Opcode_Imm(Opcode):
     def __init__(self, size):
         assert(is_imm_size(size))
@@ -1018,6 +1075,20 @@ class Opcode_Prefix_RexW:
 
     def c_output_components(self):
         return (CGen_Output_Component_Prefix_RexW(),)
+
+modrms = {
+    '/noregmem': (None, Opcode_ModRmNoReg),
+    '/regnomem': (None, Opcode_ModRmNoMem),
+    '/r': (None, Opcode_ModRm),
+    '/0': (0, Opcode_ModRm),
+    '/1': (1, Opcode_ModRm),
+    '/2': (2, Opcode_ModRm),
+    '/3': (3, Opcode_ModRm),
+    '/4': (4, Opcode_ModRm),
+    '/5': (5, Opcode_ModRm),
+    '/6': (6, Opcode_ModRm),
+    '/7': (7, Opcode_ModRm),
+}
 
 # Parsing ######################################################################
 
@@ -1209,10 +1280,14 @@ def main():
                 # Only one operand should be reg/mem.
                 assert(modrm_operand_idx == None)
                 modrm_operand_idx = len(operands)
-                # The regmems table specifies reg and mem size separately.
+                # The regmems table specifies constructor arguments and class.
                 assert(len(regmems[operand_string]) == 2)
-                modrm_reg_size = regmems[operand_string][0]
-                operands.append(Operand_RegMem(regmems[operand_string]))
+                params = regmems[operand_string][0]
+                cls = regmems[operand_string][1]
+                # The params specifies reg and mem sizes separately.
+                assert(len(params) == 2)
+                modrm_reg_size = params[0]
+                operands.append(cls(params))
             elif operand_string in regs:
                 # If there's several sources of reg size they all should
                 # specify the same size.
@@ -1238,8 +1313,12 @@ def main():
                 assert(modrm_opcode_idx == None)
                 assert(modrm_n == None)
                 modrm_opcode_idx = len(opcodes)
-                modrm_n = modrms[opcode_part]
-                opcodes.append(Opcode_ModRm(modrms[opcode_part]))
+                assert(len(modrms[opcode_part]) == 2)
+                assert(is_int_or_none(modrms[opcode_part][0]))
+                assert(is_class_opcode_modrm(modrms[opcode_part][1]))
+                modrm_n = modrms[opcode_part][0]
+                cls = modrms[opcode_part][1]
+                opcodes.append(cls(modrm_n))
             elif opcode_part in is_:
                 opcodes.append(Opcode_Imm(is_[opcode_part]))
             elif opcode_part in plusrs:
@@ -1335,10 +1414,12 @@ def main():
         entry('MOV reg16, reg/mem16', '8B /r'),
         entry('MOV reg32, reg/mem32', '8B /r'),
         entry('MOV reg64, reg/mem64', '8B /r', (ARCH_AMD64,)),
-        entry('MOV reg16/mem16, segReg', '8C /r'),
-        entry('MOV reg32/mem16, segReg', '8C /r'),
-        entry('MOV reg64/mem16, segReg', '8C /r', (ARCH_AMD64,)),
-        entry('MOV segReg, reg/mem16', '8E /r'),
+        entry('MOV noreg/mem16, segReg', '8C /noregmem', op_size = 32),
+        entry('MOV reg16/nomem, segReg', '8C /regnomem'),
+        entry('MOV reg32/nomem, segReg', '8C /regnomem'),
+        entry('MOV reg64/nomem, segReg', '8C /regnomem', (ARCH_AMD64,)),
+        entry('MOV segReg, reg16/nomem', '8E /regnomem'),
+        entry('MOV segReg, noreg/mem16', '8E /noregmem', op_size = 32),
         entry('MOV AL, moffset8', 'A0'),
         entry('MOV AX, moffset16', 'A1'),
         entry('MOV EAX, moffset32', 'A1'),
