@@ -122,14 +122,17 @@ def is_hex_byte(x):
 def is_byte_value(x):
     return x >= 0 and x <= 255
 
-def is_reg_size(x):
-    return x in (8, 16, 32, 64)
-
-def is_imm_size(x):
-    return x in (8, 16, 32, 64)
-
 def is_8_to_64(x):
     return x in (8, 16, 32, 64)
+
+def is_mem_size(x):
+    return is_8_to_64(x)
+
+def is_reg_size(x):
+    return is_8_to_64(x)
+
+def is_imm_size(x):
+    return is_8_to_64(x)
 
 def is_disp_size(x):
     return x in (8, 32)
@@ -404,6 +407,16 @@ class CGen_Function:
 
 # Operand ######################################################################
 
+def c_name_rm(reg_size, mem_size):
+    assert(is_int(reg_size))
+    assert(is_reg_size(reg_size))
+    assert(is_int(mem_size))
+    assert(is_mem_size(mem_size))
+    if reg_size == mem_size:
+        return 'rm%d' % (reg_size,)
+    else:
+        return 'r%dm%d' % (reg_size, mem_size,)
+
 class Operand:
     def arch_specific(self, arch):
         return self
@@ -411,12 +424,12 @@ class Operand:
     def warning(self):
         return None
 
-class Operand_Class_Memory(Operand):
+class Operand_Class_RegMem_Memory(Operand):
     def arch_specific(self, arch):
         # This should only be called when the operand isn't specialized yet.
         assert(self.address_size == None)
         address_size = get_native_size(arch)
-        return self.__class__(self.mem_size, address_size)
+        return self.__class__(self.reg_size, self.mem_size, address_size)
 
 class Operand_SpecificRegister(Operand):
     def __init__(self, name):
@@ -431,7 +444,7 @@ class Operand_SpecificRegister(Operand):
     def c_name(self):
         return self.name
 
-class Operand_Moffset(Operand_Class_Memory):
+class Operand_Moffset(Operand):
     def __init__(self, mem_size, address_size = None):
         self.mem_size = mem_size
         self.address_size = address_size
@@ -441,6 +454,12 @@ class Operand_Moffset(Operand_Class_Memory):
             size_to_word(self.mem_size),
             '?' if self.address_size == None else str(self.address_size),
         )
+
+    def arch_specific(self, arch):
+        # This should only be called when the operand isn't specialized yet.
+        assert(self.address_size == None)
+        address_size = get_native_size(arch)
+        return Operand_Moffset(self.mem_size, address_size)
 
     def c_parameters(self):
         assert(self.address_size != None)
@@ -486,20 +505,25 @@ class Operand_SegReg(Operand):
         return 'segReg'
 
 class Operand_RegMem_Reg(Operand):
-    def __init__(self, size):
-        self.size = size
+    def __init__(self, reg_size, mem_size):
+        self.reg_size = reg_size
+        self.mem_size = mem_size
 
     def __str__(self):
-        return 'reg%d' % (self.size,)
+        return 'reg%d' % (self.reg_size,)
 
     def c_parameters(self):
-        return (CGen_Parameter_RmReg(self.size),)
+        return (CGen_Parameter_RmReg(self.reg_size),)
 
     def c_name(self):
-        return 'rm%dreg%d' % (self.size, self.size)
+        return '%sreg%d' % (
+            c_name_rm(self.reg_size, self.mem_size),
+            self.reg_size,
+        )
 
-class Operand_RegMem_AtReg(Operand_Class_Memory):
-    def __init__(self, mem_size, address_size = None):
+class Operand_RegMem_AtReg(Operand_Class_RegMem_Memory):
+    def __init__(self, reg_size, mem_size, address_size = None):
+        self.reg_size = reg_size
         self.mem_size = mem_size
         self.address_size = address_size
 
@@ -518,10 +542,14 @@ class Operand_RegMem_AtReg(Operand_Class_Memory):
 
     def c_name(self):
         assert(self.address_size != None)
-        return 'rm%datreg%d' % (self.mem_size, self.address_size)
+        return '%satreg%d' % (
+            c_name_rm(self.reg_size, self.mem_size),
+            self.address_size
+        )
 
-class Operand_RegMem_AtDisp32(Operand_Class_Memory):
-    def __init__(self, mem_size, address_size = None):
+class Operand_RegMem_AtDisp32(Operand_Class_RegMem_Memory):
+    def __init__(self, reg_size, mem_size, address_size = None):
+        self.reg_size = reg_size
         self.mem_size = mem_size
         self.address_size = address_size
 
@@ -534,10 +562,11 @@ class Operand_RegMem_AtDisp32(Operand_Class_Memory):
 
     def c_name(self):
         assert(self.address_size != None)
-        return 'rm%datdisp32' % (self.mem_size)
+        return '%satdisp32' % (c_name_rm(self.reg_size, self.mem_size),)
 
-class Operand_RegMem_AtRegPlusDisp8(Operand_Class_Memory):
-    def __init__(self, mem_size, address_size = None):
+class Operand_RegMem_AtRegPlusDisp8(Operand_Class_RegMem_Memory):
+    def __init__(self, reg_size, mem_size, address_size = None):
+        self.reg_size = reg_size
         self.mem_size = mem_size
         self.address_size = address_size
 
@@ -559,10 +588,14 @@ class Operand_RegMem_AtRegPlusDisp8(Operand_Class_Memory):
 
     def c_name(self):
         assert(self.address_size != None)
-        return 'rm%datreg%dplusdisp8' % (self.mem_size, self.address_size,)
+        return '%satreg%dplusdisp8' % (
+            c_name_rm(self.reg_size, self.mem_size),
+            self.address_size,
+        )
 
-class Operand_RegMem_AtRegPlusDisp32(Operand_Class_Memory):
-    def __init__(self, mem_size, address_size = None):
+class Operand_RegMem_AtRegPlusDisp32(Operand_Class_RegMem_Memory):
+    def __init__(self, reg_size, mem_size, address_size = None):
+        self.reg_size = reg_size
         self.mem_size = mem_size
         self.address_size = address_size
 
@@ -584,10 +617,14 @@ class Operand_RegMem_AtRegPlusDisp32(Operand_Class_Memory):
 
     def c_name(self):
         assert(self.address_size != None)
-        return 'rm%datreg%dplusdisp32' % (self.mem_size, self.address_size,)
+        return '%satreg%dplusdisp32' % (
+            c_name_rm(self.reg_size, self.mem_size),
+            self.address_size,
+        )
 
-class Operand_RegMem_AtScaleIndexBase(Operand_Class_Memory):
-    def __init__(self, mem_size, address_size = None):
+class Operand_RegMem_AtScaleIndexBase(Operand_Class_RegMem_Memory):
+    def __init__(self, reg_size, mem_size, address_size = None):
+        self.reg_size = reg_size
         self.mem_size = mem_size
         self.address_size = address_size
 
@@ -608,10 +645,15 @@ class Operand_RegMem_AtScaleIndexBase(Operand_Class_Memory):
 
     def c_name(self):
         assert(self.address_size != None)
-        return 'rm%datbasereg%dindexreg%dscale' % (self.mem_size, self.address_size, self.address_size,)
+        return '%satbasereg%dindexreg%dscale' % (
+            c_name_rm(self.reg_size, self.mem_size),
+            self.address_size,
+            self.address_size,
+        )
 
-class Operand_RegMem_AtScaleIndexBaseDisp8(Operand_Class_Memory):
-    def __init__(self, mem_size, address_size = None):
+class Operand_RegMem_AtScaleIndexBaseDisp8(Operand_Class_RegMem_Memory):
+    def __init__(self, reg_size, mem_size, address_size = None):
+        self.reg_size = reg_size
         self.mem_size = mem_size
         self.address_size = address_size
 
@@ -633,10 +675,15 @@ class Operand_RegMem_AtScaleIndexBaseDisp8(Operand_Class_Memory):
 
     def c_name(self):
         assert(self.address_size != None)
-        return 'rm%datbasereg%dindexreg%dscaledisp8' % (self.mem_size, self.address_size, self.address_size,)
+        return '%satbasereg%dindexreg%dscaledisp8' % (
+            c_name_rm(self.reg_size, self.mem_size),
+            self.address_size,
+            self.address_size,
+        )
 
-class Operand_RegMem_AtScaleIndexBaseDisp32(Operand_Class_Memory):
-    def __init__(self, mem_size, address_size = None):
+class Operand_RegMem_AtScaleIndexBaseDisp32(Operand_Class_RegMem_Memory):
+    def __init__(self, reg_size, mem_size, address_size = None):
+        self.reg_size = reg_size
         self.mem_size = mem_size
         self.address_size = address_size
 
@@ -658,7 +705,11 @@ class Operand_RegMem_AtScaleIndexBaseDisp32(Operand_Class_Memory):
 
     def c_name(self):
         assert(self.address_size != None)
-        return 'rm%datbasereg%dindexreg%dscaledisp32' % (self.mem_size, self.address_size, self.address_size,)
+        return '%satbasereg%dindexreg%dscaledisp32' % (
+            c_name_rm(self.reg_size, self.mem_size),
+            self.address_size,
+            self.address_size,
+        )
 
 class Operand_RegMem:
     def __init__(self, sizes):
@@ -670,14 +721,14 @@ class Operand_RegMem:
 
     def modrm_split(self):
         return (
-            Operand_RegMem_Reg(self.reg_size),
-            Operand_RegMem_AtReg(self.mem_size),
-            Operand_RegMem_AtDisp32(self.mem_size),
-            Operand_RegMem_AtRegPlusDisp8(self.mem_size),
-            Operand_RegMem_AtRegPlusDisp32(self.mem_size),
-            Operand_RegMem_AtScaleIndexBase(self.mem_size),
-            Operand_RegMem_AtScaleIndexBaseDisp8(self.mem_size),
-            Operand_RegMem_AtScaleIndexBaseDisp32(self.mem_size),
+            Operand_RegMem_Reg(self.reg_size, self.mem_size),
+            Operand_RegMem_AtReg(self.reg_size, self.mem_size),
+            Operand_RegMem_AtDisp32(self.reg_size, self.mem_size),
+            Operand_RegMem_AtRegPlusDisp8(self.reg_size, self.mem_size),
+            Operand_RegMem_AtRegPlusDisp32(self.reg_size, self.mem_size),
+            Operand_RegMem_AtScaleIndexBase(self.reg_size, self.mem_size),
+            Operand_RegMem_AtScaleIndexBaseDisp8(self.reg_size, self.mem_size),
+            Operand_RegMem_AtScaleIndexBaseDisp32(self.reg_size, self.mem_size),
         )
 
 # Opcode #######################################################################
@@ -1144,6 +1195,9 @@ def main():
         entry('MOV reg16, reg/mem16', '8B /r'),
         entry('MOV reg32, reg/mem32', '8B /r'),
         entry('MOV reg64, reg/mem64', '8B /r', (ARCH_AMD64,)),
+        entry('MOV reg16/mem16, segReg', '8C /r'),
+        entry('MOV reg32/mem16, segReg', '8C /r'),
+        entry('MOV reg64/mem16, segReg', '8C /r', (ARCH_AMD64,)),
         entry('MOV segReg, reg/mem16', '8E /r'),
         entry('MOV AL, moffset8', 'A0'),
         entry('MOV AX, moffset16', 'A1'),
