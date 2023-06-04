@@ -199,16 +199,6 @@ static void x86gen_amd64_mov_reg64_rm64r(X86Gen_Output out, enum X86Gen_Reg64 sr
   X86GEN_EMIT(X86GEN_PREFIX_REX_W, 0x8B, X86GEN_MOD_RM(X86GEN_B11, src, dst));
 }
 
-/* ret */
-static void x86gen_i386_ret(X86Gen_Output out) {
-  X86GEN_EMIT(0xc3);
-}
-
-/* ret imm16 */
-static void x86gen_i386_ret_imm16(X86Gen_Output out, uint16_t imm) {
-  X86GEN_EMIT(0xc2, X86GEN_EXPAND_16(imm));
-}
-
 #define x86gen_amd64_mov_rm8r_reg8 x86gen_i386_mov_rm8r_reg8
 #define x86gen_amd64_mov_rm16r_reg16 x86gen_i386_mov_rm16r_reg16
 #define x86gen_amd64_mov_rm32r_reg32 x86gen_i386_mov_rm32r_reg32

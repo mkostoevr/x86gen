@@ -1230,6 +1230,9 @@ def main():
         # POPA
         entry('POPA', '61', (ARCH_I386,), 16),
         entry('POPAD', '61', (ARCH_I386,), 32),
+        # RET
+        entry('RET', 'C3'),
+        entry('RET imm16', 'C2 iw'),
     )
 
     for entry in entries:
