@@ -1101,6 +1101,8 @@ def main():
                 generate_generator(arch, name.lower(), operands, opcodes)
 
     entries = (
+        # AAA
+        entry('AAA', '37', (ARCH_I386,)),
         # ADD
         entry('ADD AL, imm8', '04 ib'),
         entry('ADD AX, imm16', '05 iw'),
