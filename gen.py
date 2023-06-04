@@ -411,6 +411,13 @@ class Operand:
     def warning(self):
         return None
 
+class Operand_Class_Memory(Operand):
+    def arch_specific(self, arch):
+        # This should only be called when the operand isn't specialized yet.
+        assert(self.address_size == None)
+        address_size = get_native_size(arch)
+        return self.__class__(self.mem_size, address_size)
+
 class Operand_SpecificRegister(Operand):
     def __init__(self, name):
         self.name = name.lower()
@@ -424,29 +431,23 @@ class Operand_SpecificRegister(Operand):
     def c_name(self):
         return self.name
 
-class Operand_Moffset(Operand):
-    def __init__(self, size, address_size = None):
-        self.size = size
+class Operand_Moffset(Operand_Class_Memory):
+    def __init__(self, mem_size, address_size = None):
+        self.mem_size = mem_size
         self.address_size = address_size
 
     def __str__(self):
         return '%s[addr%s]' % (
-            size_to_word(self.size),
+            size_to_word(self.mem_size),
             '?' if self.address_size == None else str(self.address_size),
         )
-
-    def arch_specific(self, arch):
-        # This should only be called when the operand isn't specialized yet.
-        assert(self.address_size == None)
-        addr_size = get_native_size(arch)
-        return Operand_Moffset(self.size, addr_size)
 
     def c_parameters(self):
         assert(self.address_size != None)
         return (CGen_Parameter_Moffset(self.address_size),)
 
     def c_name(self):
-        return 'moffset%d' % (self.size,)
+        return 'moffset%d' % (self.mem_size,)
 
 class Operand_Imm(Operand):
     def __init__(self, size):
@@ -497,7 +498,7 @@ class Operand_RegMem_Reg(Operand):
     def c_name(self):
         return 'rm%dreg%d' % (self.size, self.size)
 
-class Operand_RegMem_AtReg(Operand):
+class Operand_RegMem_AtReg(Operand_Class_Memory):
     def __init__(self, mem_size, address_size = None):
         self.mem_size = mem_size
         self.address_size = address_size
@@ -507,12 +508,6 @@ class Operand_RegMem_AtReg(Operand):
             size_to_word(self.mem_size),
             '?' if self.address_size == None else str(self.address_size),
         )
-
-    def arch_specific(self, arch):
-        # This should only be called when the operand isn't specialized yet.
-        assert(self.address_size == None)
-        addr_size = get_native_size(arch)
-        return Operand_RegMem_AtReg(self.mem_size, addr_size)
 
     def warning(self):
         return 'rm_reg can\'t be rSP or rBP.'
@@ -525,19 +520,13 @@ class Operand_RegMem_AtReg(Operand):
         assert(self.address_size != None)
         return 'rm%datreg%d' % (self.mem_size, self.address_size)
 
-class Operand_RegMem_AtDisp32(Operand):
+class Operand_RegMem_AtDisp32(Operand_Class_Memory):
     def __init__(self, mem_size, address_size = None):
         self.mem_size = mem_size
         self.address_size = address_size
 
     def __str__(self):
         return '%s[disp32]' % (size_to_word(self.mem_size),)
-
-    def arch_specific(self, arch):
-        # This should only be called when the operand isn't specialized yet.
-        assert(self.address_size == None)
-        addr_size = get_native_size(arch)
-        return Operand_RegMem_AtDisp32(self.mem_size, addr_size)
 
     def c_parameters(self):
         assert(self.address_size != None)
@@ -547,7 +536,7 @@ class Operand_RegMem_AtDisp32(Operand):
         assert(self.address_size != None)
         return 'rm%datdisp32' % (self.mem_size)
 
-class Operand_RegMem_AtRegPlusDisp8(Operand):
+class Operand_RegMem_AtRegPlusDisp8(Operand_Class_Memory):
     def __init__(self, mem_size, address_size = None):
         self.mem_size = mem_size
         self.address_size = address_size
@@ -557,12 +546,6 @@ class Operand_RegMem_AtRegPlusDisp8(Operand):
             size_to_word(self.mem_size),
             '?' if self.address_size == None else str(self.address_size),
         )
-
-    def arch_specific(self, arch):
-        # This should only be called when the operand isn't specialized yet.
-        assert(self.address_size == None)
-        addr_size = get_native_size(arch)
-        return Operand_RegMem_AtRegPlusDisp8(self.mem_size, addr_size)
 
     def warning(self):
         return 'rm_reg can\'t be rSP.'
@@ -578,7 +561,7 @@ class Operand_RegMem_AtRegPlusDisp8(Operand):
         assert(self.address_size != None)
         return 'rm%datreg%dplusdisp8' % (self.mem_size, self.address_size,)
 
-class Operand_RegMem_AtRegPlusDisp32(Operand):
+class Operand_RegMem_AtRegPlusDisp32(Operand_Class_Memory):
     def __init__(self, mem_size, address_size = None):
         self.mem_size = mem_size
         self.address_size = address_size
@@ -588,12 +571,6 @@ class Operand_RegMem_AtRegPlusDisp32(Operand):
             size_to_word(self.mem_size),
             '?' if self.address_size == None else str(self.address_size),
         )
-
-    def arch_specific(self, arch):
-        # This should only be called when the operand isn't specialized yet.
-        assert(self.address_size == None)
-        addr_size = get_native_size(arch)
-        return Operand_RegMem_AtRegPlusDisp32(self.mem_size, addr_size)
 
     def warning(self):
         return 'rm_reg can\'t be rSP.'
@@ -609,7 +586,7 @@ class Operand_RegMem_AtRegPlusDisp32(Operand):
         assert(self.address_size != None)
         return 'rm%datreg%dplusdisp32' % (self.mem_size, self.address_size,)
 
-class Operand_RegMem_AtScaleIndexBase(Operand):
+class Operand_RegMem_AtScaleIndexBase(Operand_Class_Memory):
     def __init__(self, mem_size, address_size = None):
         self.mem_size = mem_size
         self.address_size = address_size
@@ -620,12 +597,6 @@ class Operand_RegMem_AtScaleIndexBase(Operand):
             '?' if self.address_size == None else str(self.address_size),
             '?' if self.address_size == None else str(self.address_size),
         )
-
-    def arch_specific(self, arch):
-        # This should only be called when the operand isn't specialized yet.
-        assert(self.address_size == None)
-        addr_size = get_native_size(arch)
-        return Operand_RegMem_AtScaleIndexBase(self.mem_size, addr_size)
 
     def c_parameters(self):
         assert(self.address_size != None)
@@ -639,7 +610,7 @@ class Operand_RegMem_AtScaleIndexBase(Operand):
         assert(self.address_size != None)
         return 'rm%datbasereg%dindexreg%dscale' % (self.mem_size, self.address_size, self.address_size,)
 
-class Operand_RegMem_AtScaleIndexBaseDisp8(Operand):
+class Operand_RegMem_AtScaleIndexBaseDisp8(Operand_Class_Memory):
     def __init__(self, mem_size, address_size = None):
         self.mem_size = mem_size
         self.address_size = address_size
@@ -650,12 +621,6 @@ class Operand_RegMem_AtScaleIndexBaseDisp8(Operand):
             '?' if self.address_size == None else str(self.address_size),
             '?' if self.address_size == None else str(self.address_size),
         )
-
-    def arch_specific(self, arch):
-        # This should only be called when the operand isn't specialized yet.
-        assert(self.address_size == None)
-        addr_size = get_native_size(arch)
-        return Operand_RegMem_AtScaleIndexBaseDisp8(self.mem_size, addr_size)
 
     def c_parameters(self):
         assert(self.address_size != None)
@@ -670,7 +635,7 @@ class Operand_RegMem_AtScaleIndexBaseDisp8(Operand):
         assert(self.address_size != None)
         return 'rm%datbasereg%dindexreg%dscaledisp8' % (self.mem_size, self.address_size, self.address_size,)
 
-class Operand_RegMem_AtScaleIndexBaseDisp32(Operand):
+class Operand_RegMem_AtScaleIndexBaseDisp32(Operand_Class_Memory):
     def __init__(self, mem_size, address_size = None):
         self.mem_size = mem_size
         self.address_size = address_size
@@ -681,12 +646,6 @@ class Operand_RegMem_AtScaleIndexBaseDisp32(Operand):
             '?' if self.address_size == None else str(self.address_size),
             '?' if self.address_size == None else str(self.address_size),
         )
-
-    def arch_specific(self, arch):
-        # This should only be called when the operand isn't specialized yet.
-        assert(self.address_size == None)
-        addr_size = get_native_size(arch)
-        return Operand_RegMem_AtScaleIndexBaseDisp32(self.mem_size, addr_size)
 
     def c_parameters(self):
         assert(self.address_size != None)
