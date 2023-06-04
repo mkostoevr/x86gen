@@ -332,7 +332,7 @@ class CGen_Parameter_Reg(CGen_Parameter):
 
 class CGen_Parameter_SegReg(CGen_Parameter):
     def emit(self):
-        return 'enum X86Gen_SegReg segReg'
+        return 'enum X86Gen_SegReg reg'
 
 class CGen_Parameter_RmReg(CGen_Parameter):
     def __init__(self, size):
@@ -1144,6 +1144,7 @@ def main():
         entry('MOV reg16, reg/mem16', '8B /r'),
         entry('MOV reg32, reg/mem32', '8B /r'),
         entry('MOV reg64, reg/mem64', '8B /r', (ARCH_AMD64,)),
+        entry('MOV segReg, reg/mem16', '8E /r'),
         entry('MOV AL, moffset8', 'A0'),
         entry('MOV AX, moffset16', 'A1'),
         entry('MOV EAX, moffset32', 'A1'),

@@ -68,6 +68,15 @@ enum X86Gen_Reg64 {
   #undef X86GEN_ENTRY
 };
 
+enum X86Gen_SegReg {
+  X86Gen_SegReg_Es,
+  X86Gen_SegReg_Cs,
+  X86Gen_SegReg_Ss,
+  X86Gen_SegReg_Ds,
+  X86Gen_SegReg_Fs,
+  X86Gen_SegReg_Gs,
+};
+
 #define X86GEN_ENTRY(x) #x,
 
 static const char *const x86gen_reg8_cstr[] = {
