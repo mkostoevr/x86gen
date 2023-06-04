@@ -942,6 +942,8 @@ def arch_specific(arch, operands, opcodes, op_size):
 
 def generate_generator(arch, name, operands, opcodes):
     def get_mnemonic(name, operands):
+        if len(operands) == 0:
+            return name
         return '%s %s' % (name, ', '.join(
             [str(operand) for operand in operands]
         ))
