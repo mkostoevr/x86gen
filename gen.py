@@ -323,56 +323,30 @@ def test_values_int(size):
 class CGen_Parameter:
     pass
 
-class CGen_Parameter_Imm(CGen_Parameter):
-    def __init__(self, size):
+class CGen_Parameter_Unsigned(CGen_Parameter):
+    def __init__(self, name, size):
         assert(is_int(size))
-        assert(is_imm_size(size))
+        assert(is_8_to_64(size))
         self.size = size
+        self.name = name
 
     def emit(self):
-        return 'uint%d_t imm' % (self.size,)
+        return 'uint%d_t %s' % (self.size, self.name,)
 
     def test_values(self):
         return test_values_uint(self.size)
 
-class CGen_Parameter_Moffset(CGen_Parameter):
+class CGen_Parameter_Imm(CGen_Parameter_Unsigned):
     def __init__(self, size):
-        assert(is_int(size))
-        assert(is_moffset_size(size))
-        self.size = size
+        super().__init__('imm', size)
 
-    def emit(self):
-        return 'uint%d_t moffset' % (self.size,)
-
-    def test_values(self):
-        return test_values_uint(self.size)
-
-class CGen_Parameter_Disp(CGen_Parameter):
+class CGen_Parameter_Moffset(CGen_Parameter_Unsigned):
     def __init__(self, size):
-        assert(is_int(size))
-        assert(is_disp_size(size))
-        self.size = size
+        super().__init__('moffset', size)
 
-    def emit(self):
-        return 'uint%d_t disp' % (self.size,)
-
-    def test_values(self):
-        return test_values_uint(self.size)
-
-class CGen_Parameter_Reg(CGen_Parameter):
+class CGen_Parameter_Disp(CGen_Parameter_Unsigned):
     def __init__(self, size):
-        assert(is_int(size))
-        assert(is_reg_size(size))
-        self.size = size
-
-    def emit(self):
-        return 'enum X86Gen_Reg%d reg' % (self.size,)
-
-    def test_values(self):
-        assert(self.size in gp_regs_of_size)
-        return tuple(
-            [reg.lower() for reg in gp_regs_of_size[self.size]]
-        )
+        super().__init__('disp', size)
 
 class CGen_Parameter_SegReg(CGen_Parameter):
     def emit(self):
@@ -383,14 +357,49 @@ class CGen_Parameter_SegReg(CGen_Parameter):
             [reg.lower() for reg in seg_regs]
         )
 
-class CGen_Parameter_RmReg(CGen_Parameter):
-    def __init__(self, size):
+class CGen_Parameter_Reg_Generic(CGen_Parameter):
+    def __init__(self, name, size):
         assert(is_int(size))
         assert(is_reg_size(size))
+        self.name = name
         self.size = size
 
     def emit(self):
-        return 'enum X86Gen_Reg%d rm_reg' % (self.size,)
+        return 'enum X86Gen_Reg%d %s' % (self.size, self.name,)
+
+class CGen_Parameter_Reg(CGen_Parameter_Reg_Generic):
+    def __init__(self, size):
+        super().__init__('reg', size)
+
+    def test_values(self):
+        assert(self.size in gp_regs_of_size)
+        return tuple(
+            [reg.lower() for reg in gp_regs_of_size[self.size]]
+        )
+
+class CGen_Parameter_RmReg(CGen_Parameter_Reg_Generic):
+    def __init__(self, size):
+        super().__init__('rm_reg', size)
+
+    def test_values(self):
+        assert(self.size in rm_regs_of_size)
+        return tuple(
+            [reg.lower() for reg in rm_regs_of_size[self.size]]
+        )
+
+class CGen_Parameter_Base(CGen_Parameter_Reg_Generic):
+    def __init__(self, size):
+        super().__init__('sib_base', size)
+
+    def test_values(self):
+        assert(self.size in rm_regs_of_size)
+        return tuple(
+            [reg.lower() for reg in rm_regs_of_size[self.size]]
+        )
+
+class CGen_Parameter_Index(CGen_Parameter_Reg_Generic):
+    def __init__(self, size):
+        super().__init__('sib_index', size)
 
     def test_values(self):
         assert(self.size in rm_regs_of_size)
@@ -408,36 +417,6 @@ class CGen_Parameter_Scale(CGen_Parameter):
             'X86Gen_Scale_2',
             'X86Gen_Scale_4',
             'X86Gen_Scale_8',
-        )
-
-class CGen_Parameter_Index(CGen_Parameter):
-    def __init__(self, size):
-        assert(is_int(size))
-        assert(is_native_size(size))
-        self.size = size
-
-    def emit(self):
-        return 'enum X86Gen_Reg%d sib_index' % (self.size,)
-
-    def test_values(self):
-        assert(self.size in rm_regs_of_size)
-        return tuple(
-            [reg.lower() for reg in rm_regs_of_size[self.size]]
-        )
-
-class CGen_Parameter_Base(CGen_Parameter):
-    def __init__(self, size):
-        assert(is_int(size))
-        assert(is_native_size(size))
-        self.size = size
-
-    def emit(self):
-        return 'enum X86Gen_Reg%d sib_base' % (self.size,)
-
-    def test_values(self):
-        assert(self.size in rm_regs_of_size)
-        return tuple(
-            [reg.lower() for reg in rm_regs_of_size[self.size]]
         )
 
 class CGen_Parameter_Output(CGen_Parameter):
