@@ -1203,16 +1203,16 @@ def generate_tests(arch, name, operands, opcodes, function):
         operand_test_sets.append(parameter.test_values()[:test_values_limit])
     combinations = generate_combinations(operand_test_sets, 0)
     if len(combinations) == 0:
-        return ('%s(%s)' % (function_to_call, out_name,),)
+        return '%s(%s);\n' % (function_to_call, out_name,)
     else:
-        result = []
+        result = ''
         for combination in combinations:
             args = ', '.join(combination)
             # FIXME: Why is this happening?
             if len(args) == 0:
-                return ('%s(%s)' % (function_to_call, out_name,),)
-            result.append('%s(%s, %s)' % (function_to_call, out_name, args,))
-        return tuple(result)
+                return '%s(%s);\n' % (function_to_call, out_name,)
+            result += '%s(%s, %s);\n' % (function_to_call, out_name, args,)
+        return result
 
 def main():
     def entry(mnemonic, opcode, archs = (ARCH_I386, ARCH_AMD64), op_size = None):
@@ -1226,10 +1226,6 @@ def main():
         # Entry parsing result.
         name, operand_strings = mnemonic_parts(mnemonic)
         opcode_parts = get_opcode_parts(opcode)
-        # Print instruction family.
-        print('/*\n * %s %s\n */\n' % (name.lower(), ', '.join(
-            [operand_string.lower() for operand_string in operand_strings]
-        )))
         # Generic (form-independent) operands of the instruction.
         operands = []
         # Generic (form-independent) opcodes of the instruction.
@@ -1309,6 +1305,15 @@ def main():
                 opcodes[-1] = Opcode_BytePlusReg(value, plusrs[opcode_part])
             else:
                 raise Exception('Unknown opcode part: %s' % (opcode_part,))
+        # Find the instruction operand size (used for adding prefixes when need).
+        if op_size_arg != None:
+            op_size = op_size_arg
+        elif modrm_reg_size != None:
+            op_size = modrm_reg_size
+        elif reg_size != None:
+            op_size = reg_size
+        else:
+            op_size = None
         # If there's moffset in the instruction - let's add it to opcode.
         if moffset_exists:
             opcodes.append(Opcode_Moffset())
@@ -1320,19 +1325,10 @@ def main():
             variants = split_modrm(operands, opcodes, modrm_operand_idx, modrm_opcode_idx)
         else:
             variants = ((operands, opcodes),)
-        # Find the instruction operand size (used for adding prefixes when need).
-        if op_size_arg != None:
-            op_size = op_size_arg
-        elif modrm_reg_size != None:
-            op_size = modrm_reg_size
-        elif reg_size != None:
-            op_size = reg_size
-        else:
-            op_size = None
         # Instruction generators for each form of the instruction and each CPU.
         generators = []
         # Tests for each instruction form for each CPU.
-        tests = tuple()
+        tests = ''
         for arch in archs:
             for variant in variants:
                 operands = variant[0]
@@ -1342,11 +1338,7 @@ def main():
                 if with_tests:
                     tests += generate_tests(arch, name.lower(), operands, opcodes, generators[-1])
 
-        for generator in generators:
-            print(generator.emit(), end = '\n\n')
-
-        for test in tests:
-            tests_file.write('%s;\n' % (test,))
+        return ((name, operand_strings), generators, tests)
 
     with_tests = True if len(sys.argv) > 1 else False
     tests_file = open('tests.h', 'w')
@@ -1435,8 +1427,25 @@ def main():
         entry('RET imm16', 'C2 iw'),
     )
 
+    instructions = tuple()
     for entry in entries:
-        handle_entry(entry)
+        instructions += (handle_entry(entry),)
+
+    for instruction in instructions:
+        mnemonic = instruction[0]
+        generators = instruction[1]
+        tests = instruction[2]
+        name = mnemonic[0]
+        operand_strings = mnemonic[1]
+        # Print instruction family.
+        print('/*\n * %s %s\n */\n' % (name.lower(), ', '.join(
+            [operand_string.lower() for operand_string in operand_strings]
+        )))
+        for generator in generators:
+            print(generator.emit(), end = '\n\n')
+        if with_tests:
+            tests_file.write('%s' % (tests,))
+
 
 if __name__ == '__main__':
     main()
