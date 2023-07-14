@@ -204,6 +204,10 @@ class CGen_Output_Component_ModRm_AtReg(CGen_Output_Component_ModRm):
     def __init__(self, reg_value):
         super().__init__(B00, reg_value, None)
 
+class CGen_Output_Component_ModRm_AtRipPlusDisp32(CGen_Output_Component_ModRm):
+    def __init__(self, reg_value):
+        super().__init__(B00, reg_value, B101)
+
 class CGen_Output_Component_ModRm_AtDisp32(CGen_Output_Component_ModRm):
     def __init__(self, reg_value):
         super().__init__(B00, reg_value, B101)
@@ -598,6 +602,21 @@ class Operand_RegMem_AtReg(Operand_Class_RegMem_Memory):
             self.address_size
         )
 
+class Operand_RegMem_AtRipPlusDisp32(Operand):
+    def __init__(self, mem_size):
+        self.mem_size = mem_size
+        self.address_size = get_native_size(ARCH_AMD64)
+
+    def __str__(self):
+        return '%s[rIP + disp32]' % (size_to_word(self.mem_size),)
+
+    def c_parameters(self):
+        return (CGen_Parameter_Disp(32),)
+
+    def c_name(self):
+        assert(self.address_size != None)
+        return '%satripplusdisp32' % (c_name_rm(64, self.mem_size),)
+
 class Operand_RegMem_AtDisp32(Operand_Class_RegMem_Memory):
     def __init__(self, reg_size, mem_size, address_size = None):
         self.reg_size = reg_size
@@ -773,7 +792,7 @@ class Operand_RegNoMem:
     def __str__(self):
         return 'reg%d/nomem' % (self.reg_size,)
 
-    def modrm_split(self):
+    def modrm_split(self, arch):
         return (Operand_RegMem_Reg(self.reg_size, self.reg_size),)
 
 class Operand_NoRegMem:
@@ -787,16 +806,20 @@ class Operand_NoRegMem:
     def __str__(self):
         return 'noreg/mem%d' % (self.mem_size,)
 
-    def modrm_split(self):
-        return (
-            Operand_RegMem_AtReg(self.mem_size, self.mem_size),
-            Operand_RegMem_AtDisp32(self.mem_size, self.mem_size),
+    def modrm_split(self, arch):
+        result = (Operand_RegMem_AtReg(self.mem_size, self.mem_size),)
+        if arch == ARCH_I386:
+            result += (Operand_RegMem_AtDisp32(self.mem_size, self.mem_size),)
+        else:
+            result += (Operand_RegMem_AtRipPlusDisp32(self.mem_size),)
+        result += (
             Operand_RegMem_AtRegPlusDisp8(self.mem_size, self.mem_size),
             Operand_RegMem_AtRegPlusDisp32(self.mem_size, self.mem_size),
             Operand_RegMem_AtScaleIndexBase(self.mem_size, self.mem_size),
             Operand_RegMem_AtScaleIndexBaseDisp8(self.mem_size, self.mem_size),
             Operand_RegMem_AtScaleIndexBaseDisp32(self.mem_size, self.mem_size),
         )
+        return result
 
 class Operand_RegMem:
     def __init__(self, sizes):
@@ -806,17 +829,23 @@ class Operand_RegMem:
     def __str__(self):
         return 'reg%d/mem%d' % (self.reg_size, self.mem_size)
 
-    def modrm_split(self):
-        return (
+    def modrm_split(self, arch):
+        result = (
             Operand_RegMem_Reg(self.reg_size, self.mem_size),
-            Operand_RegMem_AtReg(self.reg_size, self.mem_size),
-            Operand_RegMem_AtDisp32(self.reg_size, self.mem_size),
-            Operand_RegMem_AtRegPlusDisp8(self.reg_size, self.mem_size),
-            Operand_RegMem_AtRegPlusDisp32(self.reg_size, self.mem_size),
-            Operand_RegMem_AtScaleIndexBase(self.reg_size, self.mem_size),
-            Operand_RegMem_AtScaleIndexBaseDisp8(self.reg_size, self.mem_size),
-            Operand_RegMem_AtScaleIndexBaseDisp32(self.reg_size, self.mem_size),
+            Operand_RegMem_AtReg(self.mem_size, self.mem_size),
         )
+        if arch == ARCH_I386:
+            result += (Operand_RegMem_AtDisp32(self.mem_size, self.mem_size),)
+        else:
+            result += (Operand_RegMem_AtRipPlusDisp32(self.mem_size),)
+        result += (
+            Operand_RegMem_AtRegPlusDisp8(self.mem_size, self.mem_size),
+            Operand_RegMem_AtRegPlusDisp32(self.mem_size, self.mem_size),
+            Operand_RegMem_AtScaleIndexBase(self.mem_size, self.mem_size),
+            Operand_RegMem_AtScaleIndexBaseDisp8(self.mem_size, self.mem_size),
+            Operand_RegMem_AtScaleIndexBaseDisp32(self.mem_size, self.mem_size),
+        )
+        return result
 
 regmems = {
     'reg/mem8': ((8, 8), Operand_RegMem),
@@ -903,6 +932,19 @@ class Opcode_ModRm_AtReg(Opcode):
 
     def c_output_components(self):
         return (CGen_Output_Component_ModRm_AtReg(self.reg_value),)
+
+class Opcode_ModRm_AtRipPlusDisp32(Opcode):
+    def __init__(self, reg_value):
+        self.reg_value = reg_value
+
+    def __str__(self):
+        return 'ModRM_AtRipPlusDisp32(%s)' % ('default' if self.reg_value == None else str(self.reg_value))
+
+    def c_output_components(self):
+        return (
+            CGen_Output_Component_ModRm_AtRipPlusDisp32(self.reg_value),
+            CGen_Output_Component_Disp(32),
+        )
 
 class Opcode_ModRm_AtDisp32(Opcode):
     def __init__(self, reg_value):
@@ -994,11 +1036,11 @@ class Opcode_ModRm:
     def __str__(self):
         return 'ModRM(%s)' % ('default' if self.reg_value == None else str(self.reg_value))
 
-    def modrm_split(self):
+    def modrm_split(self, arch):
         return (
             Opcode_ModRm_Reg(self.reg_value),
             Opcode_ModRm_AtReg(self.reg_value),
-            Opcode_ModRm_AtDisp32(self.reg_value),
+            Opcode_ModRm_AtDisp32(self.reg_value) if arch == ARCH_I386 else Opcode_ModRm_AtRipPlusDisp32(self.reg_value),
             Opcode_ModRm_AtRegPlusDisp8(self.reg_value),
             Opcode_ModRm_AtRegPlusDisp32(self.reg_value),
             Opcode_ModRm_AtScaleIndexBase(self.reg_value),
@@ -1010,10 +1052,10 @@ class Opcode_ModRmNoReg(Opcode_ModRm):
     def __init__(self, reg_value):
         super().__init__(reg_value)
 
-    def modrm_split(self):
+    def modrm_split(self, arch):
         return (
             Opcode_ModRm_AtReg(self.reg_value),
-            Opcode_ModRm_AtDisp32(self.reg_value),
+            Opcode_ModRm_AtDisp32(self.reg_value) if arch == ARCH_I386 else Opcode_ModRm_AtRipPlusDisp32(self.reg_value),
             Opcode_ModRm_AtRegPlusDisp8(self.reg_value),
             Opcode_ModRm_AtRegPlusDisp32(self.reg_value),
             Opcode_ModRm_AtScaleIndexBase(self.reg_value),
@@ -1025,7 +1067,7 @@ class Opcode_ModRmNoMem(Opcode_ModRm):
     def __init__(self, reg_value):
         super().__init__(reg_value)
 
-    def modrm_split(self):
+    def modrm_split(self, arch):
         return (
             Opcode_ModRm_Reg(self.reg_value),
         )
@@ -1093,10 +1135,10 @@ def get_opcode_parts(opcode):
 
 # The rest #####################################################################
 
-def split_modrm(operands, opcodes, modrm_operand_idx, modrm_opcode_idx):
+def split_modrm(arch, operands, opcodes, modrm_operand_idx, modrm_opcode_idx):
     result = []
-    operands_variants = operands[modrm_operand_idx].modrm_split()
-    opcodes_variants = opcodes[modrm_opcode_idx].modrm_split()
+    operands_variants = operands[modrm_operand_idx].modrm_split(arch)
+    opcodes_variants = opcodes[modrm_opcode_idx].modrm_split(arch)
     # Return the operand and opcode sets with different variants of
     # ModRM-related component.
     # There must the same amount of ModRM operand and opcode variants.
@@ -1320,23 +1362,24 @@ def main():
         # If we have reg/mem operand we should also ModRM opcode.
         assert((modrm_operand_idx == None and modrm_opcode_idx == None) or
                (modrm_operand_idx != None and modrm_opcode_idx != None))
-        # If the instruction uses ModRM byte, let's split it into specific ModRM forms.
-        if modrm_operand_idx != None:
-            variants = split_modrm(operands, opcodes, modrm_operand_idx, modrm_opcode_idx)
-        else:
-            variants = ((operands, opcodes),)
         # Instruction generators for each form of the instruction and each CPU.
         generators = []
         # Tests for each instruction form for each CPU.
         tests = ''
         for arch in archs:
+            # If the instruction uses ModRM byte, let's split it into specific ModRM forms.
+            if modrm_operand_idx != None:
+                variants = split_modrm(arch, operands, opcodes, modrm_operand_idx, modrm_opcode_idx)
+            else:
+                variants = ((operands, opcodes),)
+            # Now let's get the arch-specific instruction representations.
             for variant in variants:
-                operands = variant[0]
-                opcodes = variant[1]
-                operands, opcodes = arch_specific(arch, operands, opcodes, op_size)
-                generators.append(generate_generator(arch, name.lower(), operands, opcodes))
+                v_operands = variant[0]
+                v_opcodes = variant[1]
+                v_operands, v_opcodes = arch_specific(arch, v_operands, v_opcodes, op_size)
+                generators.append(generate_generator(arch, name.lower(), v_operands, v_opcodes))
                 if with_tests:
-                    tests += generate_tests(arch, name.lower(), operands, opcodes, generators[-1])
+                    tests += generate_tests(arch, name.lower(), v_operands, v_opcodes, generators[-1])
 
         return ((name, operand_strings), generators, tests)
 
