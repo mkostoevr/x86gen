@@ -151,6 +151,7 @@ OP_REGMEM_ATRIPPLUSDISP32 = gen_id()
 OP_MOFFSET = gen_id()
 OP_SPECREG = gen_id()
 OP_SPECSEGREG = gen_id()
+OP_SEGREG = gen_id()
 OP_IMM = gen_id()
 
 operand_kind_specified_regmems = set((
@@ -213,8 +214,10 @@ class Instruction_Operand:
             return 'imm%d' % (self.size,)
         elif self.kind in (OP_SPECREG, OP_SPECSEGREG,):
             return self.contents.lower()
+        elif self.kind == OP_SEGREG:
+            return 'segreg'
         else:
-            raise Exception('Unknown operand kind: %s' % (kind,))
+            raise Exception('Unknown operand kind: %s' % (self.kind,))
 
     def __str__(self):
         return self.stringify()
@@ -378,6 +381,8 @@ def generate_c_from_instr(instr):
                 suffix += operand.contents.lower()
             elif operand.kind == OP_SPECSEGREG:
                 suffix += operand.contents.lower()
+            elif operand.kind == OP_SEGREG:
+                suffix += 'segreg'
             elif operand.kind == OP_IMM:
                 suffix += 'imm%d' % (operand.size,)
             else:
@@ -431,6 +436,9 @@ def generate_c_from_instr(instr):
             ),
             OP_SPECREG: lambda operand, arch: tuple(),
             OP_SPECSEGREG: lambda operand, arch: tuple(),
+            OP_SEGREG: lambda operand, arch: (
+                C_Parameter('reg', 'enum X86Gen_SegReg'),
+            ),
             OP_IMM: lambda operand, arch: (
                 C_Parameter('imm', '%sint%d_t' % (
                     '' if operand.signed else 'u',
@@ -608,6 +616,8 @@ def main():
                                 ' operand. Use \'u\' suffix to specify an' +
                                 ' unsigned operand and \'s\' to specify a' +
                                 ' signed one. Example: imm32s, imm8u.')
+            elif operand == 'segReg':
+                result.append(Instruction_Operand(OP_SEGREG, operand, 0))
             else:
                 raise Exception('Unknown operand: %s' % (operand,))
         return tuple(result)
@@ -777,7 +787,7 @@ def main():
         entry('MOV reg64, reg/mem64', '8B /r', (ARCH_AMD64,)),
         # TODO: Implement.
         #entry('MOV reg16/32/64/mem16, segReg', '8C /r'),
-        #entry('MOV segReg, reg/mem16', '8E /r', op_size = 0),
+        entry('MOV segReg, reg/mem16', '8E /r', op_size = 0),
         entry('MOV AL, moffset8', 'A0'),
         entry('MOV AX, moffset16', 'A1'),
         entry('MOV EAX, moffset32', 'A1'),
