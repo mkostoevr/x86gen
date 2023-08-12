@@ -781,46 +781,6 @@ class Operand_RegMem_AtScaleIndexBaseDisp32(Operand_Class_RegMem_Memory):
             self.address_size,
         )
 
-class Operand_RegNoMem:
-    def __init__(self, sizes):
-        assert(is_tuple(sizes))
-        assert(len(sizes) == 2)
-        assert(sizes[1] == None)
-        assert(is_int(sizes[0]))
-        self.reg_size = sizes[0]
-
-    def __str__(self):
-        return 'reg%d/nomem' % (self.reg_size,)
-
-    def modrm_split(self, arch):
-        return (Operand_RegMem_Reg(self.reg_size, self.reg_size),)
-
-class Operand_NoRegMem:
-    def __init__(self, sizes):
-        assert(is_tuple(sizes))
-        assert(len(sizes) == 2)
-        assert(sizes[0] == None)
-        assert(is_int(sizes[1]))
-        self.mem_size = sizes[1]
-
-    def __str__(self):
-        return 'noreg/mem%d' % (self.mem_size,)
-
-    def modrm_split(self, arch):
-        result = (Operand_RegMem_AtReg(self.mem_size, self.mem_size),)
-        if arch == ARCH_I386:
-            result += (Operand_RegMem_AtDisp32(self.mem_size, self.mem_size),)
-        else:
-            result += (Operand_RegMem_AtRipPlusDisp32(self.mem_size),)
-        result += (
-            Operand_RegMem_AtRegPlusDisp8(self.mem_size, self.mem_size),
-            Operand_RegMem_AtRegPlusDisp32(self.mem_size, self.mem_size),
-            Operand_RegMem_AtScaleIndexBase(self.mem_size, self.mem_size),
-            Operand_RegMem_AtScaleIndexBaseDisp8(self.mem_size, self.mem_size),
-            Operand_RegMem_AtScaleIndexBaseDisp32(self.mem_size, self.mem_size),
-        )
-        return result
-
 class Operand_RegMem:
     def __init__(self, sizes):
         self.reg_size = sizes[0]
@@ -852,12 +812,6 @@ regmems = {
     'reg/mem16': ((16, 16), Operand_RegMem),
     'reg/mem32': ((32, 32), Operand_RegMem),
     'reg/mem64': ((64, 64), Operand_RegMem),
-    'reg16/nomem': ((16, None), Operand_RegNoMem),
-    'reg32/nomem': ((32, None), Operand_RegNoMem),
-    'reg64/nomem': ((64, None), Operand_RegNoMem),
-    'noreg/mem16': ((None, 16), Operand_NoRegMem),
-    'noreg/mem32': ((None, 32), Operand_NoRegMem),
-    'noreg/mem64': ((None, 64), Operand_NoRegMem),
 }
 
 # Opcode #######################################################################
@@ -1098,8 +1052,6 @@ class Opcode_Prefix_RexW:
         return (CGen_Output_Component_Prefix_RexW(),)
 
 modrms = {
-    '/noregmem': (None, Opcode_ModRmNoReg),
-    '/regnomem': (None, Opcode_ModRmNoMem),
     '/r': (None, Opcode_ModRm),
     '/0': (0, Opcode_ModRm),
     '/1': (1, Opcode_ModRm),
@@ -1428,12 +1380,6 @@ def main():
         entry('MOV reg16, reg/mem16', '8B /r'),
         entry('MOV reg32, reg/mem32', '8B /r'),
         entry('MOV reg64, reg/mem64', '8B /r', (ARCH_AMD64,)),
-        entry('MOV noreg/mem16, segReg', '8C /noregmem', op_size = 32),
-        entry('MOV reg16/nomem, segReg', '8C /regnomem'),
-        entry('MOV reg32/nomem, segReg', '8C /regnomem'),
-        entry('MOV reg64/nomem, segReg', '8C /regnomem', (ARCH_AMD64,)),
-        entry('MOV segReg, reg16/nomem', '8E /regnomem'),
-        entry('MOV segReg, noreg/mem16', '8E /noregmem', op_size = 32),
         entry('MOV AL, moffset8', 'A0'),
         entry('MOV AX, moffset16', 'A1'),
         entry('MOV EAX, moffset32', 'A1'),
