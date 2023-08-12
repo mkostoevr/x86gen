@@ -523,7 +523,7 @@ def generate_c_from_instr(instr):
 
     def instr_original_mnemonic(instr):
         result = instr.name.lower()
-        result += ' ' # if len(instr.operands) != 0 else '' # FIXME: Remove the trailing space.
+        result += ' ' if len(instr.operands) != 0 else ''
         result += ', '.join([(
             operand.contents if 'imm' not in operand.contents
             else operand.contents[:-1]).lower() # There's a signity in the end.
