@@ -872,6 +872,26 @@ def main():
         # RET
         entry('RET', 'C3'),
         entry('RET imm16u', 'C2 iw', op_size = 0),
+        # SUB
+        entry('SUB AL, imm8u', '2C ib'),
+        entry('SUB AX, imm16u', '2D iw'),
+        entry('SUB EAX, imm32u', '2D id'),
+        entry('SUB RAX, imm32s', '2D id', (ARCH_AMD64,)),
+        entry('SUB reg/mem8, imm8u', '80 /5 ib'),
+        entry('SUB reg/mem16, imm16u', '81 /5 iw'),
+        entry('SUB reg/mem32, imm32u', '81 /5 id'),
+        entry('SUB reg/mem64, imm32s', '81 /5 id', (ARCH_AMD64,)),
+        entry('SUB reg/mem16, imm8s', '83 /5 ib'),
+        entry('SUB reg/mem32, imm8s', '83 /5 ib'),
+        entry('SUB reg/mem64, imm8s', '83 /5 ib', (ARCH_AMD64,)),
+        entry('SUB reg/mem8, reg8', '28 /r'),
+        entry('SUB reg/mem16, reg16', '29 /r'),
+        entry('SUB reg/mem32, reg32', '29 /r'),
+        entry('SUB reg/mem64, reg64', '29 /r', (ARCH_AMD64,)),
+        entry('SUB reg8, reg/mem8', '2A /r'),
+        entry('SUB reg16, reg/mem16', '2B /r'),
+        entry('SUB reg32, reg/mem32', '2B /r'),
+        entry('SUB reg64, reg/mem64', '2B /r', (ARCH_AMD64,)),
     )
 
     instructions = tuple()
