@@ -397,11 +397,11 @@ def generate_c_from_instr(instr):
             ),
             OP_REGMEM_ATREGPLUSDISP8: lambda operand, arch: (
                 C_Parameter('rm_reg', 'enum X86Gen_Reg%d' % (get_native_size(arch),)),
-                C_Parameter('disp', 'uint8_t',), # FIXME: This should be signed.
+                C_Parameter('disp', 'int8_t',),
             ),
             OP_REGMEM_ATREGPLUSDISP32: lambda operand, arch: (
                 C_Parameter('rm_reg', 'enum X86Gen_Reg%d' % (get_native_size(arch),)),
-                C_Parameter('disp', 'uint32_t',), # FIXME: This should be signed.
+                C_Parameter('disp', 'int32_t',),
             ),
             OP_REGMEM_ATSIB: lambda operand, arch: (
                 C_Parameter('sib_base', 'enum X86Gen_Reg%d' % (get_native_size(arch),)),
@@ -412,16 +412,16 @@ def generate_c_from_instr(instr):
                 C_Parameter('sib_base', 'enum X86Gen_Reg%d' % (get_native_size(arch),)),
                 C_Parameter('sib_index', 'enum X86Gen_Reg%d' % (get_native_size(arch),)),
                 C_Parameter('sib_scale', 'enum X86Gen_Scale'),
-                C_Parameter('disp', 'uint8_t'), # FIXME: This should be signed.
+                C_Parameter('disp', 'int8_t'),
             ),
             OP_REGMEM_ATSIBPLUSDISP32: lambda operand, arch: (
                 C_Parameter('sib_base', 'enum X86Gen_Reg%d' % (get_native_size(arch),)),
                 C_Parameter('sib_index', 'enum X86Gen_Reg%d' % (get_native_size(arch),)),
                 C_Parameter('sib_scale', 'enum X86Gen_Scale'),
-                C_Parameter('disp', 'uint32_t'), # FIXME: This should be signed.
+                C_Parameter('disp', 'int32_t'),
             ),
             OP_REGMEM_ATRIPPLUSDISP32: lambda operand, arch: (
-                C_Parameter('disp', 'uint32_t'), # FIXME: This should be signed.
+                C_Parameter('disp', 'int32_t'),
             ),
             OP_REGMEM_ATDISP32: lambda operand, arch: (
                 C_Parameter('disp', 'uint32_t'),
