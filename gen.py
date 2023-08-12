@@ -37,10 +37,12 @@ moffsets = {
 }
 
 regmems = {
-    'reg/mem8': 8,
-    'reg/mem16': 16,
-    'reg/mem32': 32,
-    'reg/mem64': 64,
+    'reg/mem8': (8, 8),
+    'reg/mem16': (16, 16),
+    'reg/mem32': (32, 32),
+    'reg/mem64': (64, 64),
+    'reg32/mem16': (32, 16),
+    'reg64/mem16': (64, 16),
 }
 
 slashes = {
@@ -172,42 +174,52 @@ operand_kind = operand_kind_specified_regmems | set((
     OP_MOFFSET,
     OP_SPECREG,
     OP_SPECSEGREG,
+    OP_SEGREG,
     OP_IMM,
 ))
 
-@dataclass
 class Instruction_Operand:
-    kind: str           # One of operand_kind.
-    contents: str       # The operand contents in the mnemonic.
-    size: int           # Size of the operand (size of the destination if the operand is a pointer).
-    signed: bool = None # Only for OP_IMM: is the immediate signed.
+    def __init__(self, kind, contents, size, signed = None, mem_size = None):
+        assert(kind in operand_kind)
+        self.kind = kind
+        # The operand contents in the mnemonic.
+        self.contents = contents
+        # Size of the operand (size of the destination if the operand is a pointer).
+        self.size = size
+        # Only for OP_IMM: is the immediate signed.
+        self.signed = signed
+        # Only for OP_REGMEM: separated size of the memory destination.
+        self.mem_size = mem_size if mem_size != None else size
 
     def dup_specialized_modrm(self, new_kind):
         assert(isinstance(self, Instruction_Operand))
         assert(new_kind in operand_kind_specified_regmems)
-        return Instruction_Operand(new_kind, self.contents, self.size, self.signed)
+        return Instruction_Operand(new_kind, self.contents, self.size, self.signed, self.mem_size)
 
     def stringify(self, native_size = 0):
         if self.kind in (OP_REG, OP_REGMEM_REG,):
             return 'reg%d' % (self.size,)
         elif self.kind == OP_REGMEM:
-            return 'reg/mem%d' % (self.size,)
+            if self.size == self.mem_size:
+                return 'reg/mem%d' % (self.size,)
+            else:
+                return 'reg%d/mem%d' % (self.size, self.mem_size,)
         elif self.kind == OP_REGMEM_ATREG:
-            return '%s[reg%d]' % (size_to_word(self.size), native_size)
+            return '%s[reg%d]' % (size_to_word(self.mem_size), native_size)
         elif self.kind == OP_REGMEM_ATREGPLUSDISP8:
-            return '%s[reg%d + disp8]' % (size_to_word(self.size), native_size,)
+            return '%s[reg%d + disp8]' % (size_to_word(self.mem_size), native_size,)
         elif self.kind == OP_REGMEM_ATREGPLUSDISP32:
-            return '%s[reg%d + disp32]' % (size_to_word(self.size), native_size,)
+            return '%s[reg%d + disp32]' % (size_to_word(self.mem_size), native_size,)
         elif self.kind == OP_REGMEM_ATDISP32:
-            return '%s[disp32]' % (size_to_word(self.size),)
+            return '%s[disp32]' % (size_to_word(self.mem_size),)
         elif self.kind == OP_REGMEM_ATRIPPLUSDISP32:
-            return '%s[rIP + disp32]' % (size_to_word(self.size),)
+            return '%s[rIP + disp32]' % (size_to_word(self.mem_size),)
         elif self.kind == OP_REGMEM_ATSIB:
-            return '%s[reg%d + reg%d * scale]' % (size_to_word(self.size), native_size, native_size,)
+            return '%s[reg%d + reg%d * scale]' % (size_to_word(self.mem_size), native_size, native_size,)
         elif self.kind == OP_REGMEM_ATSIBPLUSDISP8:
-            return '%s[reg%d + reg%d * scale + disp8]' % (size_to_word(self.size), native_size, native_size,)
+            return '%s[reg%d + reg%d * scale + disp8]' % (size_to_word(self.mem_size), native_size, native_size,)
         elif self.kind == OP_REGMEM_ATSIBPLUSDISP32:
-            return '%s[reg%d + reg%d * scale + disp32]' % (size_to_word(self.size), native_size, native_size,)
+            return '%s[reg%d + reg%d * scale + disp32]' % (size_to_word(self.mem_size), native_size, native_size,)
         elif self.kind == OP_MOFFSET:
             return '%s[disp%d]' % (size_to_word(self.size), native_size)
         elif self.kind == OP_IMM:
@@ -593,8 +605,8 @@ def main():
         result = []
         for operand in decomposed_entry_operands:
             if operand in regmems:
-                modrm_size = regmems[operand]
-                result.append(Instruction_Operand(OP_REGMEM, operand, modrm_size))
+                reg_size, mem_size = regmems[operand]
+                result.append(Instruction_Operand(OP_REGMEM, operand, reg_size, mem_size = mem_size))
             elif operand in regs:
                 reg_size = regs[operand]
                 result.append(Instruction_Operand(OP_REG, operand, reg_size))
@@ -610,7 +622,7 @@ def main():
                 imm_size = imms[operand]
                 assert(operand[-1] in ('s', 'u'))
                 signed = True if operand[-1] == 's' else False
-                result.append(Instruction_Operand(OP_IMM, operand, imm_size, signed))
+                result.append(Instruction_Operand(OP_IMM, operand, imm_size, signed = signed))
             elif operand in imms_without_signs:
                 raise Exception('Please specify the signity of the immediate' +
                                 ' operand. Use \'u\' suffix to specify an' +
@@ -785,8 +797,9 @@ def main():
         entry('MOV reg16, reg/mem16', '8B /r'),
         entry('MOV reg32, reg/mem32', '8B /r'),
         entry('MOV reg64, reg/mem64', '8B /r', (ARCH_AMD64,)),
-        # TODO: Implement.
-        #entry('MOV reg16/32/64/mem16, segReg', '8C /r'),
+        entry('MOV reg/mem16, segReg', '8C /r'),
+        entry('MOV reg32/mem16, segReg', '8C /r'),
+        entry('MOV reg64/mem16, segReg', '8C /r', (ARCH_AMD64,)),
         entry('MOV segReg, reg/mem16', '8E /r', op_size = 0),
         entry('MOV AL, moffset8', 'A0'),
         entry('MOV AX, moffset16', 'A1'),
