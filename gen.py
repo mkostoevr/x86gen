@@ -346,47 +346,50 @@ def generate_c_from_instr(instr):
         suffix = ''
         for operand in instr.operands:
             suffix += '_'
+            if operand.kind in operand_kind_specified_regmems:
+                suffix += ('rm%d' % (operand.size,) if operand.size == operand.mem_size
+                           else 'r%dm%d' % (operand.size, operand.mem_size,))
             if operand.kind == OP_REG:
                 suffix += 'reg%d' % (operand.size,)
             elif operand.kind == OP_REGMEM_REG:
-                suffix += 'rm%dreg%d' % (operand.size, operand.size,)
+                suffix += 'reg%d' % (operand.size,)
             elif operand.kind == OP_REGMEM_ATREG:
-                suffix += 'rm%datreg%d' % (
-                    operand.size,
+                suffix += 'mem%datreg%d' % (
+                    operand.mem_size,
                     get_native_size(instr.archs[0]),
                 )
             elif operand.kind == OP_REGMEM_ATREGPLUSDISP8:
-                suffix += 'rm%datreg%dplusdisp8' % (
-                    operand.size,
+                suffix += 'mem%datreg%dplusdisp8' % (
+                    operand.mem_size,
                     get_native_size(instr.archs[0]),
                 )
             elif operand.kind == OP_REGMEM_ATREGPLUSDISP32:
-                suffix += 'rm%datreg%dplusdisp32' % (
-                    operand.size,
+                suffix += 'mem%datreg%dplusdisp32' % (
+                    operand.mem_size,
                     get_native_size(instr.archs[0]),
                 )
             elif operand.kind == OP_REGMEM_ATSIB:
-                suffix += 'rm%datbasereg%dindexreg%dscale' % (
-                    operand.size,
+                suffix += 'mem%datbasereg%dindexreg%dscale' % (
+                    operand.mem_size,
                     get_native_size(instr.archs[0]),
                     get_native_size(instr.archs[0]),
                 )
             elif operand.kind == OP_REGMEM_ATSIBPLUSDISP8:
-                suffix += 'rm%datbasereg%dindexreg%dscaledisp8' % (
-                    operand.size,
+                suffix += 'mem%datbasereg%dindexreg%dscaleplusdisp8' % (
+                    operand.mem_size,
                     get_native_size(instr.archs[0]),
                     get_native_size(instr.archs[0]),
                 )
             elif operand.kind == OP_REGMEM_ATSIBPLUSDISP32:
-                suffix += 'rm%datbasereg%dindexreg%dscaledisp32' % (
-                    operand.size,
+                suffix += 'mem%datbasereg%dindexreg%dscaleplusdisp32' % (
+                    operand.mem_size,
                     get_native_size(instr.archs[0]),
                     get_native_size(instr.archs[0]),
                 )
             elif operand.kind == OP_REGMEM_ATDISP32:
-                suffix += 'rm%datdisp32' % (operand.size,)
+                suffix += 'mem%datdisp32' % (operand.mem_size,)
             elif operand.kind == OP_REGMEM_ATRIPPLUSDISP32:
-                suffix += 'rm%datripplusdisp32' % (operand.size,)
+                suffix += 'mem%datripplusdisp32' % (operand.mem_size,)
             elif operand.kind == OP_MOFFSET:
                 suffix += 'moffset%d' % (operand.size,)
             elif operand.kind == OP_SPECREG:
