@@ -433,7 +433,7 @@ def generate_c_from_instr(instr):
             OP_SPECSEGREG: lambda operand, arch: tuple(),
             OP_IMM: lambda operand, arch: (
                 C_Parameter('imm', '%sint%d_t' % (
-                    'u' if operand.signed else 'u', # FIXME: The right signity.
+                    '' if operand.signed else 'u',
                     operand.size,
                 )),
             ),
