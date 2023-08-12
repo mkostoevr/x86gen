@@ -20,6 +20,11 @@ imms = {
     'imm64s': 64,
 }
 
+reloffs = {
+    'rel16off': 16,
+    'rel32off': 32,
+}
+
 imms_without_signs = ('imm8', 'imm16', 'imm32', 'imm64')
 
 regs = {
@@ -626,6 +631,9 @@ def main():
                 assert(operand[-1] in ('s', 'u'))
                 signed = True if operand[-1] == 's' else False
                 result.append(Instruction_Operand(OP_IMM, operand, imm_size, signed = signed))
+            elif operand in reloffs:
+                off_size = reloffs[operand]
+                result.append(Instruction_Operand(OP_IMM, operand, off_size, signed = True))
             elif operand in imms_without_signs:
                 raise Exception('Please specify the signity of the immediate' +
                                 ' operand. Use \'u\' suffix to specify an' +
@@ -787,6 +795,12 @@ def main():
         entry('ADD reg16, reg/mem16', '03 /r'),
         entry('ADD reg32, reg/mem32', '03 /r'),
         entry('ADD reg64, reg/mem64', '03 /r', (ARCH_AMD64,)),
+        # CALL
+        entry('CALL rel16off', 'E8 iw'),
+        entry('CALL rel32off', 'E8 id'),
+        entry('CALL reg/mem16', 'FF /2'),
+        entry('CALL reg/mem32', 'FF /2', (ARCH_I386,)),
+        entry('CALL reg/mem64', 'FF /2', (ARCH_AMD64,)),
         # DAA
         entry('DAA', '27', (ARCH_I386,)),
         # DAS
