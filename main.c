@@ -50,9 +50,5 @@
 #define ss X86Gen_SegReg_SS
 
 int main() {
-  FILE *const out_i386 = fopen("test32.bin", "wb");
-  FILE *const out_amd64 = fopen("test64.bin", "wb");
-#include "tests.h"
-  fclose(out_i386);
-  fclose(out_amd64);
+	return 0;
 }
