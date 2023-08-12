@@ -21,6 +21,7 @@ imms = {
 }
 
 reloffs = {
+    'rel8off': 8,
     'rel16off': 16,
     'rel32off': 32,
 }
@@ -69,6 +70,13 @@ is_ = {
     'iq': 64,
 }
 
+cs = {
+    'cb': 8,
+    'cw': 16,
+    'cd': 32,
+    'cp': 48,
+}
+
 plusrs = {
     '+rb': 8,
     '+rw': 16,
@@ -106,7 +114,7 @@ def is_str(obj):
 
 def is_hex_byte(x):
     assert(is_str(x))
-    hexdigits = '0123456789abcdefABCDEF'
+    hexdigits = '0123456789ABCDEF'
     return len(x) == 2 and all(c in hexdigits for c in x)
 
 def size_to_word(size):
@@ -666,6 +674,8 @@ def main():
                 modrm_reg = slashes[opcode]
             elif opcode in is_:
                 imm_size = is_[opcode]
+            elif opcode in cs:
+                imm_size = cs[opcode]
             else:
                 raise Exception('Unknown opcode: %s' % (opcode,))
         return Instruction_OpcodeInfo(
@@ -795,7 +805,7 @@ def main():
         entry('ADD reg16, reg/mem16', '03 /r'),
         entry('ADD reg32, reg/mem32', '03 /r'),
         entry('ADD reg64, reg/mem64', '03 /r', (ARCH_AMD64,)),
-        # CALL
+        # CALL (Near)
         entry('CALL rel16off', 'E8 iw'),
         entry('CALL rel32off', 'E8 id'),
         entry('CALL reg/mem16', 'FF /2'),
@@ -825,6 +835,13 @@ def main():
         entry('DAA', '27', (ARCH_I386,)),
         # DAS
         entry('DAS', '2F', (ARCH_I386,)),
+        # JMP (Near)
+        entry('JMP rel8off', 'EB cb'),
+        entry('JMP rel16off', 'E9 cw'),
+        entry('JMP rel32off', 'E9 cd'),
+        entry('JMP reg/mem16', 'FF /4'),
+        entry('JMP reg/mem32', 'FF /4'),
+        entry('JMP reg/mem64', 'FF /4', (ARCH_AMD64,)),
         # MOV
         entry('MOV reg/mem8, reg8', '88 /r'),
         entry('MOV reg/mem16, reg16', '89 /r'),
