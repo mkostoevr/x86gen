@@ -139,6 +139,12 @@ class Instruction_OpcodeInfo:
             prefix_rex = any((rex_w,)),
         )
 
+    def dup_add_operand_size_override_prefix(self):
+        return replace(self, prefix_operand_size_override = True)
+
+    def dup_add_rex_w_prefix(self):
+        return replace(self, prefix_rex_w = True, prefix_rex = True)
+
     def __str__(self):
         result = ''
         if self.prefix_operand_size_override:
